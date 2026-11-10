@@ -1,0 +1,10 @@
+ServiceGate checked 6 service image pins across 2 service families.
+
+Errors (1):
+  [version-drift] Postgres major versions disagree: 16 (docker-compose.yml:3, compose db); 15 (.github/workflows/ci.yml:8, workflow postgres); 14.12 (tests/setup.ts:4, source).
+
+Warnings (3):
+  [unpinned-image] Redis image is unpinned (latest) at docker-compose.yml:5 (compose). Pin a numeric major tag instead of 'latest'.
+  [missing-healthcheck] GitHub Actions service "postgres" in .github/workflows/ci.yml:8 has no --health-cmd. Without it, jobs can start before Postgres is ready.
+  [missing-healthcheck] GitHub Actions service "redis" in .github/workflows/ci.yml:14 has no --health-cmd. Without it, jobs can start before Redis is ready.
+# exit 1

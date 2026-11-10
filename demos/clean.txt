@@ -1,0 +1,3 @@
+ServiceGate checked 8 service image pins across 2 service families.
+OK — Compose, CI, and test service images agree.
+# exit 0

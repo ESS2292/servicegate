@@ -40,6 +40,7 @@
       </a>
       <ul class="nav-links">
         <li><a href="#checks">What it checks</a></li>
+        <li><a href="#demo">Demo</a></li>
         <li><a href="#ci">CI</a></li>
         <li><a href="#limits">Limits</a></li>
         <li><a href="#pricing">Pricing</a></li>
@@ -151,6 +152,50 @@
   uses: ESS2292/servicegate-action@v1</pre>
         </div>
 
+      </section>
+
+      <section id="demo">
+        <h2>Real demo output</h2>
+        <p class="note">These are recorded runs against the package examples. Fixtures are synthetic. The output is from the real ServiceGate 0.1.0 CLI, including exit codes.</p>
+
+        <figure class="demo-rec">
+          <video autoplay loop muted playsinline controls poster="demos/servicegate-demo.gif" width="960" height="540">
+            <source src="demos/servicegate-demo.mp4" type="video/mp4" />
+            <img src="demos/servicegate-demo.gif" width="960" height="540" alt="Terminal recording: ServiceGate passes when Compose, CI, and tests agree on Postgres and Redis, then fails when Postgres majors drift and Redis is unpinned." />
+          </video>
+          <figcaption>ServiceGate on the package examples: agreeing image pins exit 0; Postgres major drift and an unpinned Redis tag exit 1. Recorded from the real 0.1.0 CLI. The # exit lines are the process exit codes, not CLI output.</figcaption>
+        </figure>
+
+        <div class="grid-2">
+          <div class="terminal">
+            <div class="bar">
+              <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+              <span class="bar-cmd">node bin/servicegate.js check examples/clean</span>
+            </div>
+<pre><span class="c-accent">ServiceGate checked 8 service image pins across 2 service families.</span>
+<span class="c-ok">OK — Compose, CI, and test service images agree.</span>
+<span class="c-ok"># exit 0</span>
+</pre>
+          </div>
+
+          <div class="terminal">
+            <div class="bar">
+              <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+              <span class="bar-cmd">node bin/servicegate.js check examples/drift</span>
+            </div>
+<pre><span class="c-accent">ServiceGate checked 6 service image pins across 2 service families.</span>
+
+<span class="c-err">Errors (1):</span>
+<span class="c-err">  [version-drift] Postgres major versions disagree: 16 (docker-compose.yml:3, compose db); 15 (.github/workflows/ci.yml:8, workflow postgres); 14.12 (tests/setup.ts:4, source).</span>
+
+<span class="c-warn">Warnings (3):</span>
+<span class="c-warn">  [unpinned-image] Redis image is unpinned (latest) at docker-compose.yml:5 (compose). Pin a numeric major tag instead of &#x27;latest&#x27;.</span>
+<span class="c-warn">  [missing-healthcheck] GitHub Actions service &quot;postgres&quot; in .github/workflows/ci.yml:8 has no --health-cmd. Without it, jobs can start before Postgres is ready.</span>
+<span class="c-warn">  [missing-healthcheck] GitHub Actions service &quot;redis&quot; in .github/workflows/ci.yml:14 has no --health-cmd. Without it, jobs can start before Redis is ready.</span>
+<span class="c-err"># exit 1</span>
+</pre>
+          </div>
+        </div>
       </section>
 
       <section id="ci">
