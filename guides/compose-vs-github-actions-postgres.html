@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Do your Compose file and GitHub Actions agree on Postgres? — ServiceGate Guides</title>
+  <meta name="description" content="A Compose pin and a workflow service image can drift independently. Documented cases include a 12-vs-14 split and a migration that bumped both files together." />
+  <meta name="author" content="Emilio Straubel" />
+  <meta name="robots" content="noindex" />
+  <meta property="og:title" content="Do your Compose file and GitHub Actions agree on Postgres? — ServiceGate Guides" />
+  <meta property="og:description" content="A Compose pin and a workflow service image can drift independently. Documented cases include a 12-vs-14 split and a migration that bumped both files together." />
+  <meta property="og:type" content="article" />
+  <meta property="og:site_name" content="ServiceGate" />
+  <meta property="og:url" content="https://ess2292.github.io/servicegate/guides/compose-vs-github-actions-postgres.html" />
+  <link rel="canonical" href="https://ess2292.github.io/servicegate/guides/compose-vs-github-actions-postgres.html" />
+  <meta property="og:image" content="https://ess2292.github.io/servicegate/og-image.png" />
+  <meta property="og:image:type" content="image/png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="ServiceGate — fail CI when Compose and Actions disagree on Postgres" />
+  <meta property="article:published_time" content="2026-11-10" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Do your Compose file and GitHub Actions agree on Postgres? — ServiceGate Guides" />
+  <meta name="twitter:description" content="A Compose pin and a workflow service image can drift independently. Documented cases include a 12-vs-14 split and a migration that bumped both files together." />
+  <meta name="twitter:image" content="https://ess2292.github.io/servicegate/og-image.png" />
+  <meta name="twitter:image:alt" content="ServiceGate — fail CI when Compose and Actions disagree on Postgres" />
+  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "TechArticle", "headline": "Do your Compose file and GitHub Actions agree on Postgres?", "description": "A Compose pin and a workflow service image can drift independently. Documented cases include a 12-vs-14 split and a migration that bumped both files together.", "author": {"@type": "Person", "name": "Emilio Straubel"}, "datePublished": "2026-11-10", "dateModified": "2026-11-10", "mainEntityOfPage": "https://ess2292.github.io/servicegate/guides/compose-vs-github-actions-postgres.html", "publisher": {"@type": "Person", "name": "Emilio Straubel"}, "image": "https://ess2292.github.io/servicegate/og-image.png"}</script>
+  <meta name="theme-color" content="#0b1220" />
+  <link rel="icon" href="../favicon.svg" type="image/svg+xml" />
+  <link rel="icon" href="../favicon-32.png" type="image/png" sizes="32x32" />
+  <link rel="apple-touch-icon" href="../apple-touch-icon.png" />
+  <link rel="stylesheet" href="../styles.css" />
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <div class="wrap">
+    <nav class="site-nav" aria-label="Primary">
+      <a class="brand" href="../index.html">
+        <span class="brand-mark" aria-hidden="true">sg</span>
+        ServiceGate
+      </a>
+      <ul class="nav-links">
+        <li><a href="../index.html#checks">What it checks</a></li>
+        <li><a href="../index.html#ci">CI</a></li>
+        <li><a href="../index.html#limits">Limits</a></li>
+        <li><a href="../index.html#pricing">Pricing</a></li>
+        <li><a href="index.html" aria-current="page">Guides</a></li>
+        <li><a href="../index.html#faq">FAQ</a></li>
+        <li><a href="https://github.com/ESS2292/servicegate-action">Lite Action</a></li>
+      </ul>
+    </nav>
+    <main id="main" class="article">
+      <p class="crumbs"><a href="../index.html">ServiceGate</a> / <a href="index.html">Guides</a></p>
+      <section>
+        <div class="eyebrow">Guide &middot; November 10, 2026</div>
+        <h1>Do your Compose file and GitHub Actions agree on Postgres?</h1>
+        <p class="lead">A Compose <code>image:</code> line and a workflow <code>services:</code> image are two declarations. They drift unless something compares them.</p>
+        <p>Local development often starts Postgres from a Compose file. CI often starts it as a GitHub Actions service container. Those two files are usually edited in different pull requests. The result can be a green CI job on one major and a laptop or deploy on another.</p>
+        <p>That split is documented. On 10 November 2026, a scan of <a href="https://github.com/graphile/worker">graphile/worker</a> at commit <code>b4f1b41c7abd747586879bf68a46a5a22897fa96</code> found <code>postgres:12-alpine</code> in <code>docker-compose.yml</code> and <code>postgres:14</code> on two jobs in <code>.github/workflows/ci.yml</code>. The same workflow also tests a matrix of majors 14 through 18, so 12 is not in the set CI actually runs. This write-up does not claim the project uses ServiceGate; it is a public tree that shows the file-to-file disagreement.</p>
+        <p>The other direction is also documented: bump both files in the same change. <a href="https://github.com/blockscout/blockscout/pull/11334">blockscout/blockscout #11334</a> (merged 9 December 2024) updated Docker Compose <em>and</em> GitHub Actions workflows together when moving Postgres 15 to 17.</p>
+        <p>A later pattern is a shared variable. <a href="https://github.com/cibrandocampo/nudge/commit/01c8fb1793d926b57f78fab62590ec60d048fc2b">cibrandocampo/nudge commit 01c8fb1</a> (1 May 2026) bumped <code>postgres:16-alpine</code> to <code>postgres:17-alpine</code> and <code>redis:7-alpine</code> to <code>redis:8-alpine</code> in CI services and in dev/prod Compose defaults, via shared <code>DOCKER_POSTGRES_VERSION</code> / <code>DOCKER_REDIS_VERSION</code> variables, so a single env edit keeps both stacks in sync. A scan of that repository at <code>bb3b462f35d0f37ee06180d06c3050c969b5b017</code> (9 November 2026) still had those pins in agreement.</p>
+        <h2>Compare the two pins in CI</h2>
+        <p>Official GitHub docs for <a href="https://docs.github.com/en/actions/tutorials/use-containerized-services/create-postgresql-service-containers">Creating PostgreSQL service containers</a> (fetched 10 November 2026) require a service <code>image</code> and include <code>--health-cmd pg_isready</code> so the job waits until Postgres is ready. They do not compare that image to a Compose file. A small scan of both sources catches the 12-vs-14 class of drift before a review has to notice it by eye.</p>
+        <p>The free <a href="https://github.com/ESS2292/servicegate-action">ServiceGate Lite Action</a> compares Compose files to GitHub Actions <code>services:</code> and fails the job when known families disagree on the major. A missing <code>--health-cmd</code> on a known-family service is a warning, not a failure. The full CLI also reads Dockerfiles, Testcontainers literals, and committed <code>.env.example</code> version variables. Checkout is not live.</p>
+      </section>
+      <section class="cta-box" aria-label="ServiceGate">
+        <h2>Want the check in CI?</h2>
+        <p>The free <a href="https://github.com/ESS2292/servicegate-action">ServiceGate Lite GitHub Action</a> compares Compose files to GitHub Actions service images. The full <strong>ServiceGate CLI</strong> also reads Dockerfiles, Testcontainers literals, and committed <code>.env.example</code> version variables, with a JSON report, locally or in any CI. Checkout is not live.</p>
+        <p><strong>$19 one-time</strong> &middot; Node 18+ &middot; zero runtime dependencies &middot; MIT source included. Checkout is not live.</p>
+        <p><a class="cta-link" href="../index.html#pricing">See ServiceGate &rarr;</a></p>
+      </section>
+      <section>
+        <h2>Related guides</h2>
+        <ul>
+          <li><a href="testcontainers-vs-compose-postgres.html">When Testcontainers and Compose pin different Postgres majors</a></li>
+          <li><a href="pg-dump-client-server-version-mismatch.html">pg_dump failed because the client and the service were different majors</a></li>
+        </ul>
+      </section>
+    </main>
+    <footer>
+      <nav class="family-nav" aria-label="Other tools in this family">
+        <span class="family-label">Also:</span>
+          <a href="https://ess2292.github.io/envgate/">EnvGate</a>
+          <a href="https://ess2292.github.io/runtimegate/">RuntimeGate</a>
+          <a href="https://ess2292.github.io/lockgate/">LockGate</a>
+          <a href="https://ess2292.github.io/servicegate/" aria-current="page">ServiceGate</a>
+      </nav>
+<div class="footer-row">
+        <div>ServiceGate 0.1.0 by Emilio Straubel · pre-launch pages, not indexed</div>
+        <div class="footer-links">
+          <a href="../index.html">Home</a>
+          <a href="index.html" aria-current="page">Guides</a>
+          <a href="../privacy.html">Privacy</a>
+          <a href="../terms.html">Terms</a>
+          <a href="https://github.com/ESS2292/servicegate-action">Lite Action</a>
+          <a href="https://github.com/ESS2292/servicegate-action/issues">Issues</a>
+        </div>
+      </div>
+    </footer>
+  </div>
+</body>
+</html>

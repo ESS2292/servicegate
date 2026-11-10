@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ServiceGate — fail CI when Compose and Actions disagree on Postgres</title>
+  <meta name="description" content="A $19 one-time Node.js CLI that fails CI when Docker Compose, GitHub Actions services, Dockerfiles, and Testcontainers disagree on a Postgres, Redis, or other data-store image major. MIT source included." />
+  <meta name="author" content="Emilio Straubel" />
+  <meta name="robots" content="noindex" />
+  <meta property="og:title" content="ServiceGate — fail CI when Compose and Actions disagree on Postgres" />
+  <meta property="og:description" content="A $19 one-time Node.js CLI that fails CI when Docker Compose, GitHub Actions services, Dockerfiles, and Testcontainers disagree on a Postgres, Redis, or other data-store image major. MIT source included." />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="ServiceGate" />
+  <meta property="og:url" content="https://ess2292.github.io/servicegate/" />
+  <link rel="canonical" href="https://ess2292.github.io/servicegate/" />
+  <meta property="og:image" content="https://ess2292.github.io/servicegate/og-image.png" />
+  <meta property="og:image:type" content="image/png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="ServiceGate — fail CI when Compose and Actions disagree on Postgres" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="ServiceGate — fail CI when Compose and Actions disagree on Postgres" />
+  <meta name="twitter:description" content="A $19 one-time Node.js CLI that fails CI when Docker Compose, GitHub Actions services, Dockerfiles, and Testcontainers disagree on a Postgres, Redis, or other data-store image major. MIT source included." />
+  <meta name="twitter:image" content="https://ess2292.github.io/servicegate/og-image.png" />
+  <meta name="twitter:image:alt" content="ServiceGate — fail CI when Compose and Actions disagree on Postgres" />
+  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "ServiceGate", "applicationCategory": "DeveloperApplication", "operatingSystem": "Node.js 18+", "offers": {"@type": "Offer", "price": "19", "priceCurrency": "USD"}, "description": "A $19 one-time Node.js CLI that fails CI when Docker Compose, GitHub Actions services, Dockerfiles, and Testcontainers disagree on a Postgres, Redis, or other data-store image major. MIT source included.", "author": {"@type": "Person", "name": "Emilio Straubel"}, "url": "https://ess2292.github.io/servicegate/"}</script>
+  <meta name="theme-color" content="#0b1220" />
+  <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+  <link rel="icon" href="favicon-32.png" type="image/png" sizes="32x32" />
+  <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <div class="wrap">
+    <nav class="site-nav" aria-label="Primary">
+      <a class="brand" href="index.html">
+        <span class="brand-mark" aria-hidden="true">sg</span>
+        ServiceGate
+      </a>
+      <ul class="nav-links">
+        <li><a href="#checks">What it checks</a></li>
+        <li><a href="#ci">CI</a></li>
+        <li><a href="#limits">Limits</a></li>
+        <li><a href="#pricing">Pricing</a></li>
+        <li><a href="guides/index.html">Guides</a></li>
+        <li><a href="#faq">FAQ</a></li>
+        <li><a href="https://github.com/ESS2292/servicegate-action">Lite Action</a></li>
+      </ul>
+    </nav>
+
+    <header class="hero">
+      <div>
+        <div class="eyebrow">Developer CLI · MIT source included · pre-launch site, not indexed</div>
+        <h1>ServiceGate — fail CI when Compose and Actions disagree on the Postgres image, not the deploy</h1>
+        <p class="lead">
+          A small Node.js CLI that checks whether your Docker Compose files, GitHub Actions service containers, Dockerfiles, and Testcontainers literals agree on a data-store or sidecar image major.
+        </p>
+        <div class="meta">
+          <span class="chip"><em>v0.1.0</em></span>
+          <span class="chip">Node <em>18+</em></span>
+          <span class="chip">Runtime deps <em>0</em></span>
+          <span class="chip">License <em>MIT</em></span>
+          <span class="chip">One-time <em>$19 USD</em></span>
+        </div>
+        <p class="note">
+          ServiceGate is a local CLI you run against a checkout. It is a consistency gate, not a digest pin and not a check against Docker Hub or an end-of-support calendar.
+          The 0.1.0 source + CLI bundle is MIT licensed. Checkout is not live. This site is a public pre-launch draft and is not indexed.
+        </p>
+      </div>
+
+      <aside class="price-card" id="pricing" aria-label="Pricing">
+        <div class="amt">$19<span>USD · one-time</span></div>
+        <p>
+          Packaged CLI + full MIT source, examples, tests, and a sample GitHub Actions workflow.
+          You are buying a packaged release and seller-provided packaging/docs convenience — not exclusive proprietary rights to the code.
+        </p>
+        <button type="button" id="buy-btn" class="buy-btn" disabled data-checkout-url="">Checkout coming soon</button>
+        <p class="buy-note">Checkout is not live yet. The buy button stays disabled until a live checkout URL is approved. Payments will be processed by Lemon Squeezy when the store opens.</p>
+        <div class="art" aria-hidden="true">
+          <svg class="art-svg" viewBox="0 0 640 360" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="g1" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="#38bdf8" stop-opacity=".9"/>
+                <stop offset="100%" stop-color="#5eead4" stop-opacity=".7"/>
+              </linearGradient>
+              <linearGradient id="g2" x1="0" y1="1" x2="1" y2="0">
+                <stop offset="0%" stop-color="#1e293b"/>
+                <stop offset="100%" stop-color="#0f172a"/>
+              </linearGradient>
+            </defs>
+            <rect width="640" height="360" fill="url(#g2)"/>
+            <rect x="50" y="90" width="170" height="44" rx="10" fill="#122038" stroke="#2a3a55"/>
+            <text x="135" y="118" text-anchor="middle" fill="#9aadc9" font-family="ui-monospace,monospace" font-size="13">compose:16</text>
+            <rect x="235" y="90" width="170" height="44" rx="10" fill="#122038" stroke="#2a3a55"/>
+            <text x="320" y="118" text-anchor="middle" fill="#9aadc9" font-family="ui-monospace,monospace" font-size="13">actions:15</text>
+            <rect x="420" y="90" width="170" height="44" rx="10" fill="#122038" stroke="#2a3a55"/>
+            <text x="505" y="118" text-anchor="middle" fill="#9aadc9" font-family="ui-monospace,monospace" font-size="13">tests:14</text>
+            <path d="M135 134 v40 H320 v0 H505 v40" fill="none" stroke="#fb7185" stroke-width="3"/>
+            <rect x="245" y="220" width="150" height="36" rx="14" fill="#fb7185"/>
+            <text x="320" y="244" text-anchor="middle" fill="#1b0a0e" font-family="ui-sans-serif,system-ui,sans-serif" font-size="14" font-weight="700">exit 1</text>
+            <text x="40" y="48" fill="#e8eefc" font-family="ui-sans-serif,system-ui,sans-serif" font-size="22" font-weight="700">ServiceGate</text>
+            <text x="40" y="74" fill="#9aadc9" font-family="ui-sans-serif,system-ui,sans-serif" font-size="13">service image pin gate</text>
+          </svg>
+        </div>
+      </aside>
+    </header>
+
+    <main id="main">
+      <div class="grid-2" id="checks">
+        <section>
+          <h2>What it checks</h2>
+          <ul>
+            <li><code>servicegate check</code> — primary command</li>
+            <li>Major-version drift across Docker Compose files, GitHub Actions <code>jobs.&lt;id&gt;.services</code>, Dockerfiles, Testcontainers string literals, and committed <code>.env.example</code> version variables</li>
+            <li><code>postgres:16</code> and <code>postgres:16.14-alpine</code> agree; <code>postgres:15</code> vs <code>postgres:16</code> does not</li>
+            <li>Minor or patch disagreement, when both pins spell out a minor, is a warning</li>
+            <li>A <code>dev</code> / <code>local</code> / <code>override</code> Compose file that pins a different major is a warning, not a failure (persistent local volumes are a documented reason to keep an older major)</li>
+            <li>Unpinned tags (<code>:latest</code> or a missing tag) are warnings, or errors with <code>--strict-pins</code></li>
+            <li>A GitHub Actions service for a known family with no <code>--health-cmd</code> is a warning</li>
+            <li>A single-version core pin that is not in a CI version matrix is a warning</li>
+            <li><code>--json</code>, <code>--ignore</code>, <code>--root</code>, <code>--strict-pins</code>, <code>--include-fixtures</code></li>
+            <li>Exit codes: <code>0</code> pass, <code>1</code> violations, <code>2</code> usage or missing root</li>
+          </ul>
+        </section>
+        <section>
+          <h2>What it is not</h2>
+          <ul>
+            <li>Not a Dockerfile style linter (see hadolint) and not a digest pin writer</li>
+            <li>Not a full YAML 1.2 parser (no anchors or merge keys)</li>
+            <li>Does not resolve Testcontainers library defaults or dynamically built tags</li>
+            <li>Does not call the network, look up Docker Hub, or check an end-of-support calendar</li>
+            <li>Language runtime images (<code>node</code>, <code>python</code>, <code>golang</code>, …) are out of scope — use RuntimeGate</li>
+            <li>Lite (the GitHub Action) does not read Dockerfiles, Testcontainers, or <code>.env.example</code></li>
+          </ul>
+        </section>
+      </div>
+
+      <section id="lite">
+        <h2>Lite vs the full CLI</h2>
+        <p>ServiceGate Lite is a free GitHub Action that compares Docker Compose files to GitHub Actions <code>services:</code> image pins. Use it as <code>ESS2292/servicegate-action@v1</code>. Files under <code>tests/fixtures</code>-style paths are skipped by default. The $19 CLI also reads Dockerfiles, Testcontainers string literals, and committed <code>.env.example</code> version variables, and it adds a JSON report and a command you can run on a laptop or in any CI. Checkout is not live.</p>
+        <p><a class="cta-link" href="https://github.com/ESS2292/servicegate-action">Open the ServiceGate Lite Action &rarr;</a></p>
+        <div class="terminal">
+          <div class="bar">
+            <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+            <span class="bar-cmd">.github/workflows/services.yml</span>
+          </div>
+<pre>- uses: actions/checkout@v5
+
+- name: Check Compose and Actions service images
+  uses: ESS2292/servicegate-action@v1</pre>
+        </div>
+
+      </section>
+
+      <section id="ci">
+        <h2>CI sketch</h2>
+        <p class="note">From the bundled workflow sketch. The paid CLI is not published to npm; unpack the tarball and point the job at the binary, or install it from the unpacked tree.</p>
+        <div class="terminal">
+          <div class="bar">
+            <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+            <span class="bar-cmd">.github/workflows/servicegate-example.yml</span>
+          </div>
+<pre><span class="c-muted"># Example only — copy into a consuming repository. The paid CLI is not published yet.</span>
+name: ServiceGate
+
+on:
+  pull_request:
+  push:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Run ServiceGate
+        run: node /path/to/servicegate/bin/servicegate.js check</pre>
+        </div>
+      </section>
+
+      <section id="limits">
+        <h2>Honest limits</h2>
+        <ul>
+          <li>Workflow and Compose parsing is best-effort, not a full YAML 1.2 implementation. Anchors, merge keys, and some generated expressions can be missed.</li>
+          <li>Testcontainers detection looks for string literals that already look like <code>postgres:16-alpine</code>, and only in files that import a Testcontainers library. It does not resolve library defaults, constructor helpers, or dynamically built tags.</li>
+          <li>Image families are a fixed list: Postgres (including Bitnami, pgvector, PostGIS, Timescale, and Supabase images), Redis, Valkey, MySQL, MariaDB, MongoDB, Elasticsearch, OpenSearch, RabbitMQ, Kafka (including Redpanda), Memcached, MinIO, LocalStack, ClickHouse, Cassandra, Neo4j, InfluxDB, and CockroachDB. An unusual fork or a renamed image is skipped rather than guessed at.</li>
+          <li>Major-version comparison is the contract. Patch freshness against Docker Hub, digest pinning, and end-of-support calendars are out of scope for 0.1.0 and are not looked up on the network.</li>
+          <li>A GitHub Actions matrix is expanded from <code>strategy.matrix</code> (including <code>include</code> rows). Dynamic matrix generation is not resolved.</li>
+          <li><code>.env</code> files that are gitignored are not read; only committed example env files supply variable values. Lite does not read those files at all, but still honors Compose <code>${VAR:-default}</code> defaults.</li>
+        </ul>
+      </section>
+
+      <section id="buy">
+        <h2>Buy the packaged CLI</h2>
+        <p>When checkout is live, this page will point at the Lemon Squeezy listing. Until then the button stays disabled. The packaged price is <strong>$19 USD, one-time</strong>. MIT source is included.</p>
+      </section>
+
+      <section class="cta-box" aria-label="Guides">
+        <h2>Guides</h2>
+        <p>Guides on Compose vs GitHub Actions Postgres pins, Testcontainers drifting from Compose, and <code>pg_dump</code> failing when the client and the service are different majors. They are public but pre-launch, and are not indexed.</p>
+        <p><a class="cta-link" href="guides/index.html">Read the guides &rarr;</a></p>
+      </section>
+
+      <section id="faq" class="faq">
+        <h2>FAQ</h2>
+        <details>
+          <summary>Is this the same as RuntimeGate?</summary>
+          <p>No. RuntimeGate checks whether language runtime version pins (Node.js, Python, Go, and so on) agree. ServiceGate checks whether data-store and sidecar image pins (Postgres, Redis, and related families) agree. They share an audience (CI and DevOps) and the same “fail the job, not the deploy” idea. The free <a href="https://github.com/ESS2292/runtimegate-action">RuntimeGate Lite</a>, <a href="https://github.com/ESS2292/envgate-action">EnvGate Lite</a>, and <a href="https://github.com/ESS2292/lockgate-action">LockGate Lite</a> Actions are published separately.</p>
+        </details>
+        <details>
+          <summary>Why $19 if the source is MIT?</summary>
+          <p>MIT allows selling copies. The price is for a packaged, tested release with docs and a CI sketch, not exclusive ownership of the code. Buyers (and others) may redistribute under MIT terms.</p>
+        </details>
+        <details>
+          <summary>What about a dev Compose file that stays on an older Postgres major?</summary>
+          <p>That is treated as a warning, not a failure. A documented case is <a href="https://github.com/NangoHQ/nango/issues/6287">NangoHQ/nango #6287</a>, where the author did not want the persistent local volume moved off Postgres 15 even after the public compose file moved to 16. ServiceGate classifies <code>dev</code> / <code>local</code> / <code>override</code> Compose files that way on purpose.</p>
+        </details>
+        <details>
+          <summary>Does Lite check Dockerfiles or Testcontainers?</summary>
+          <p>No. ServiceGate Lite compares Docker Compose files to GitHub Actions <code>services:</code> only. Dockerfiles, Testcontainers literals, and <code>.env.example</code> interpolation are in the full CLI. Checkout is not live.</p>
+        </details>
+        <details>
+          <summary>Where is the free GitHub Action?</summary>
+          <p>ServiceGate Lite is published at <a href="https://github.com/ESS2292/servicegate-action">ESS2292/servicegate-action</a>. Use <code>ESS2292/servicegate-action@v1</code>. Questions can be opened as <a href="https://github.com/ESS2292/servicegate-action/issues">GitHub Issues</a>.</p>
+        </details>
+        <details>
+          <summary>How do I get support?</summary>
+          <p>Open an issue on the <a href="https://github.com/ESS2292/servicegate-action/issues">ServiceGate Lite repository</a>. A seller support email will be added before the paid listing goes live. Do not use an invented address.</p>
+        </details>
+      </section>
+    </main>
+
+    <footer>
+      <nav class="family-nav" aria-label="Other tools in this family">
+        <span class="family-label">Also:</span>
+          <a href="https://ess2292.github.io/envgate/">EnvGate</a>
+          <a href="https://ess2292.github.io/runtimegate/">RuntimeGate</a>
+          <a href="https://ess2292.github.io/lockgate/">LockGate</a>
+          <a href="https://ess2292.github.io/servicegate/" aria-current="page">ServiceGate</a>
+      </nav>
+<div class="footer-row">
+        <div>
+          ServiceGate 0.1.0 by Emilio Straubel · $19 one-time · MIT source included · pre-launch site, not indexed, no tracking
+        </div>
+        <div class="footer-links">
+          <a href="index.html">Home</a>
+          <a href="guides/index.html">Guides</a>
+          <a href="privacy.html">Privacy</a>
+          <a href="terms.html">Terms</a>
+          <a href="https://github.com/ESS2292/servicegate-action">Lite Action</a>
+          <a href="https://github.com/ESS2292/servicegate-action/issues">Issues</a>
+        </div>
+      </div>
+    </footer>
+  </div>
+
+  <script>
+    (function () {
+      var btn = document.getElementById("buy-btn");
+      if (!btn) return;
+      var url = (btn.getAttribute("data-checkout-url") || "").trim();
+      if (!url) return;
+      btn.disabled = false;
+      btn.textContent = "Buy ServiceGate — $19";
+      btn.addEventListener("click", function () {
+        window.location.href = url;
+      });
+    })();
+  </script>
+</body>
+</html>

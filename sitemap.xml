@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Prepared for launch. Not referenced by the live robots.txt yet; robots.launch.txt points here. -->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://ess2292.github.io/servicegate/</loc><lastmod>2026-11-10</lastmod></url>
+  <url><loc>https://ess2292.github.io/servicegate/privacy.html</loc><lastmod>2026-11-10</lastmod></url>
+  <url><loc>https://ess2292.github.io/servicegate/terms.html</loc><lastmod>2026-11-10</lastmod></url>
+  <url><loc>https://ess2292.github.io/servicegate/guides/</loc><lastmod>2026-11-10</lastmod></url>
+  <url><loc>https://ess2292.github.io/servicegate/guides/compose-vs-github-actions-postgres.html</loc><lastmod>2026-11-10</lastmod></url>
+  <url><loc>https://ess2292.github.io/servicegate/guides/testcontainers-vs-compose-postgres.html</loc><lastmod>2026-11-10</lastmod></url>
+  <url><loc>https://ess2292.github.io/servicegate/guides/pg-dump-client-server-version-mismatch.html</loc><lastmod>2026-11-10</lastmod></url>
+</urlset>

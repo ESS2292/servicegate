@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Guides: Compose vs Actions Postgres pins, Testcontainers drift, and pg_dump mismatches — ServiceGate</title>
+  <meta name="description" content="Practical guides on Compose and GitHub Actions disagreeing on Postgres, Testcontainers pinning a different major than Compose, and pg_dump failing when the client and the service are different majors." />
+  <meta name="author" content="Emilio Straubel" />
+  <meta name="robots" content="noindex" />
+  <link rel="canonical" href="https://ess2292.github.io/servicegate/guides/" />
+  <meta property="og:title" content="Guides: Compose vs Actions Postgres pins, Testcontainers drift, and pg_dump mismatches — ServiceGate" />
+  <meta property="og:description" content="Practical guides on Compose and GitHub Actions disagreeing on Postgres, Testcontainers pinning a different major than Compose, and pg_dump failing when the client and the service are different majors." />
+  <meta property="og:type" content="article" />
+  <meta property="og:url" content="https://ess2292.github.io/servicegate/guides/" />
+  <meta property="og:site_name" content="ServiceGate" />
+  <meta property="og:image" content="https://ess2292.github.io/servicegate/og-image.png" />
+  <meta property="og:image:type" content="image/png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="ServiceGate — fail CI when Compose and Actions disagree on Postgres" />
+  <meta property="article:published_time" content="2026-11-10" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Guides: Compose vs Actions Postgres pins, Testcontainers drift, and pg_dump mismatches — ServiceGate" />
+  <meta name="twitter:description" content="Practical guides on Compose and GitHub Actions disagreeing on Postgres, Testcontainers pinning a different major than Compose, and pg_dump failing when the client and the service are different majors." />
+  <meta name="twitter:image" content="https://ess2292.github.io/servicegate/og-image.png" />
+  <meta name="twitter:image:alt" content="ServiceGate — fail CI when Compose and Actions disagree on Postgres" />
+  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "TechArticle", "headline": "Service image pin agreement guides", "description": "Practical guides on Compose and GitHub Actions disagreeing on Postgres, Testcontainers pinning a different major than Compose, and pg_dump failing when the client and the service are different majors.", "author": {"@type": "Person", "name": "Emilio Straubel"}, "datePublished": "2026-11-10", "dateModified": "2026-11-10", "mainEntityOfPage": "https://ess2292.github.io/servicegate/guides/", "publisher": {"@type": "Person", "name": "Emilio Straubel"}, "image": "https://ess2292.github.io/servicegate/og-image.png"}</script>
+  <meta name="theme-color" content="#0b1220" />
+  <link rel="icon" href="../favicon.svg" type="image/svg+xml" />
+  <link rel="icon" href="../favicon-32.png" type="image/png" sizes="32x32" />
+  <link rel="apple-touch-icon" href="../apple-touch-icon.png" />
+  <link rel="stylesheet" href="../styles.css" />
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <div class="wrap">
+    <nav class="site-nav" aria-label="Primary">
+      <a class="brand" href="../index.html">
+        <span class="brand-mark" aria-hidden="true">sg</span>
+        ServiceGate
+      </a>
+      <ul class="nav-links">
+        <li><a href="../index.html#checks">What it checks</a></li>
+        <li><a href="../index.html#ci">CI</a></li>
+        <li><a href="../index.html#limits">Limits</a></li>
+        <li><a href="../index.html#pricing">Pricing</a></li>
+        <li><a href="index.html" aria-current="page">Guides</a></li>
+        <li><a href="../index.html#faq">FAQ</a></li>
+        <li><a href="https://github.com/ESS2292/servicegate-action">Lite Action</a></li>
+      </ul>
+    </nav>
+    <main id="main" class="article">
+      <p class="crumbs"><a href="../index.html">ServiceGate</a> / <a href="index.html">Guides</a></p>
+      <section>
+        <div class="eyebrow">Guides &middot; Updated November 10, 2026</div>
+        <h1>Service image pin agreement guides</h1>
+        <p class="lead">How to keep Docker Compose, GitHub Actions service containers, and tests on the same Postgres or Redis major.</p>
+        <p>These guides are public but pre-launch, and should not be indexed. Facts about official docs, cited issues, commits, and Stack Overflow statistics were checked on 10 November 2026.</p>
+      </section>
+      <div class="guide-list">
+        <article class="guide-card">
+          <h2><a href="compose-vs-github-actions-postgres.html">Do your Compose file and GitHub Actions agree on Postgres?</a></h2>
+          <p>A Compose pin and a workflow service image can drift independently. Documented cases include a 12-vs-14 split and a migration that bumped both files together.</p>
+        </article>
+        <article class="guide-card">
+          <h2><a href="testcontainers-vs-compose-postgres.html">When Testcontainers and Compose pin different Postgres majors</a></h2>
+          <p>A public Compose file can move to Postgres 16 while tests still start 15.5, including a case where a shared-variable pull request was closed without merging.</p>
+        </article>
+        <article class="guide-card">
+          <h2><a href="pg-dump-client-server-version-mismatch.html">pg_dump failed because the client and the service were different majors</a></h2>
+          <p>When CI upgrades the Postgres service, a host client or an older pg_dump can refuse to talk to it. Official docs also show why a health check belongs on the service.</p>
+        </article>
+      </div>
+      <section class="cta-box" aria-label="ServiceGate">
+        <h2>Want the check in CI?</h2>
+        <p>The free <a href="https://github.com/ESS2292/servicegate-action">ServiceGate Lite GitHub Action</a> compares Compose files to GitHub Actions service images. The full <strong>ServiceGate CLI</strong> also reads Dockerfiles, Testcontainers literals, and committed <code>.env.example</code> version variables, with a JSON report, locally or in any CI. Checkout is not live.</p>
+        <p><strong>$19 one-time</strong> &middot; Node 18+ &middot; zero runtime dependencies &middot; MIT source included. Checkout is not live.</p>
+        <p><a class="cta-link" href="../index.html#pricing">See ServiceGate &rarr;</a></p>
+      </section>
+    </main>
+    <footer>
+      <nav class="family-nav" aria-label="Other tools in this family">
+        <span class="family-label">Also:</span>
+          <a href="https://ess2292.github.io/envgate/">EnvGate</a>
+          <a href="https://ess2292.github.io/runtimegate/">RuntimeGate</a>
+          <a href="https://ess2292.github.io/lockgate/">LockGate</a>
+          <a href="https://ess2292.github.io/servicegate/" aria-current="page">ServiceGate</a>
+      </nav>
+<div class="footer-row">
+        <div>ServiceGate 0.1.0 by Emilio Straubel · pre-launch pages, not indexed</div>
+        <div class="footer-links">
+          <a href="../index.html">Home</a>
+          <a href="index.html" aria-current="page">Guides</a>
+          <a href="../privacy.html">Privacy</a>
+          <a href="../terms.html">Terms</a>
+          <a href="https://github.com/ESS2292/servicegate-action">Lite Action</a>
+          <a href="https://github.com/ESS2292/servicegate-action/issues">Issues</a>
+        </div>
+      </div>
+    </footer>
+  </div>
+</body>
+</html>

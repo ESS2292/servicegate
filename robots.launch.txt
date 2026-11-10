@@ -1,0 +1,6 @@
+# Launch-ready robots.txt for ServiceGate.
+# At launch: replace robots.txt with this file AND remove <meta name="robots" content="noindex"> from every page.
+User-agent: *
+Allow: /
+
+Sitemap: https://ess2292.github.io/servicegate/sitemap.xml

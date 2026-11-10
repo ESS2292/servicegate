@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-label="sg">
+  <rect width="512" height="512" rx="96" fill="#0b1526"/>
+  <rect x="22" y="22" width="468" height="468" rx="80" fill="none" stroke="#38bdf8" stroke-width="22"/>
+  <text x="256" y="328" text-anchor="middle" fill="#38bdf8" font-family="Liberation Sans, Noto Sans, DejaVu Sans, sans-serif" font-size="210" font-weight="700">sg</text>
+</svg>
