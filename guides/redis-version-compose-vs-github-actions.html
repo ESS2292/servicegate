@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Redis version drift between docker-compose.yml and GitHub Actions services — ServiceGate Guides</title>
+  <meta name="description" content="redis:7 in Compose and redis:latest or redis:6.2 in CI are different servers. What those tags resolve to today, which commands and persistence formats actually differ, and how to keep one pin." />
+  <meta name="author" content="Emilio Straubel" />
+  <meta name="robots" content="noindex" />
+  <meta property="og:title" content="Redis version drift between docker-compose.yml and GitHub Actions services — ServiceGate Guides" />
+  <meta property="og:description" content="redis:7 in Compose and redis:latest or redis:6.2 in CI are different servers. What those tags resolve to today, which commands and persistence formats actually differ, and how to keep one pin." />
+  <meta property="og:type" content="article" />
+  <meta property="og:site_name" content="ServiceGate" />
+  <meta property="og:url" content="https://ess2292.github.io/servicegate/guides/redis-version-compose-vs-github-actions.html" />
+  <link rel="canonical" href="https://ess2292.github.io/servicegate/guides/redis-version-compose-vs-github-actions.html" />
+  <meta property="og:image" content="https://ess2292.github.io/servicegate/og-image.png" />
+  <meta property="og:image:type" content="image/png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="ServiceGate — fail CI when Compose and Actions disagree on Postgres" />
+  <meta property="article:published_time" content="2026-11-15" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Redis version drift between docker-compose.yml and GitHub Actions services — ServiceGate Guides" />
+  <meta name="twitter:description" content="redis:7 in Compose and redis:latest or redis:6.2 in CI are different servers. What those tags resolve to today, which commands and persistence formats actually differ, and how to keep one pin." />
+  <meta name="twitter:image" content="https://ess2292.github.io/servicegate/og-image.png" />
+  <meta name="twitter:image:alt" content="ServiceGate — fail CI when Compose and Actions disagree on Postgres" />
+  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "TechArticle", "headline": "Redis version drift between docker-compose.yml and GitHub Actions services", "description": "redis:7 in Compose and redis:latest or redis:6.2 in CI are different servers. What those tags resolve to today, which commands and persistence formats actually differ, and how to keep one pin.", "author": {"@type": "Person", "name": "Emilio Straubel"}, "datePublished": "2026-11-15", "dateModified": "2026-11-15", "mainEntityOfPage": "https://ess2292.github.io/servicegate/guides/redis-version-compose-vs-github-actions.html", "publisher": {"@type": "Person", "name": "Emilio Straubel"}, "image": "https://ess2292.github.io/servicegate/og-image.png"}</script>
+  <meta name="theme-color" content="#0b1220" />
+  <link rel="icon" href="../favicon.svg" type="image/svg+xml" />
+  <link rel="icon" href="../favicon-32.png" type="image/png" sizes="32x32" />
+  <link rel="apple-touch-icon" href="../apple-touch-icon.png" />
+  <link rel="stylesheet" href="../styles.css" />
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <div class="wrap">
+    <nav class="site-nav" aria-label="Primary">
+      <a class="brand" href="../index.html">
+        <span class="brand-mark" aria-hidden="true">sg</span>
+        ServiceGate
+      </a>
+      <ul class="nav-links">
+        <li><a href="../index.html#checks">What it checks</a></li>
+        <li><a href="../index.html#ci">CI</a></li>
+        <li><a href="../index.html#limits">Limits</a></li>
+        <li><a href="../index.html#pricing">Pricing</a></li>
+        <li><a href="index.html" aria-current="page">Guides</a></li>
+        <li><a href="../index.html#faq">FAQ</a></li>
+        <li><a href="https://github.com/ESS2292/servicegate-action">Lite Action</a></li>
+      </ul>
+    </nav>
+    <main id="main" class="article">
+      <p class="crumbs"><a href="../index.html">ServiceGate</a> / <a href="index.html">Guides</a></p>
+      <section>
+        <div class="eyebrow">Guide &middot; November 15, 2026</div>
+        <h1>Redis version drift between docker-compose.yml and GitHub Actions services</h1>
+        <p class="lead">A Compose file that says <code>redis:7-alpine</code> and a workflow service that says <code>redis</code>, <code>redis:latest</code>, or <code>redis:6.2</code> are not running the same server. Code that works on one can fail on the other.</p>
+        <h2>What the tags point to today</h2>
+        <p>Floating Docker tags move. According to the Redis entry in <a href="https://github.com/docker-library/official-images/blob/master/library/redis">docker-library/official-images</a> on 15 November 2026:</p>
+        <table class="compare">
+          <thead>
+            <tr><th>Tag</th><th>Resolves to</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>redis</code>, <code>redis:latest</code>, <code>redis:8</code></td><td>8.10.3</td></tr>
+            <tr><td><code>redis:7</code>, <code>redis:7.4</code></td><td>7.4.12</td></tr>
+            <tr><td><code>redis:7.2</code></td><td>7.2.17</td></tr>
+            <tr><td><code>redis:6</code>, <code>redis:6.2</code></td><td>6.2.24</td></tr>
+          </tbody>
+        </table>
+        <p>So <code>redis:7</code> in Compose next to <code>redis:latest</code> in CI is 7.4 on a laptop and 8.10 in CI, and the gap changes whenever a new 8.x lands. The official GitHub docs example for <a href="https://docs.github.com/en/actions/tutorials/use-containerized-services/create-redis-service-containers">Creating Redis service containers</a> (fetched 15 November 2026) uses <code>image: redis</code> with no tag, which means latest. Copying that example into a workflow is a common way to end up with an unpinned CI Redis.</p>
+        <h2>Differences that actually break things</h2>
+        <p>The clearest failures are commands that do not exist on the older server. Per the &ldquo;Available since&rdquo; line on each official Redis command page (checked 15 November 2026):</p>
+        <ul>
+          <li><strong>Redis 6.2.0:</strong> <a href="https://redis.io/docs/latest/commands/getdel/"><code>GETDEL</code></a> and <a href="https://redis.io/docs/latest/commands/getex/"><code>GETEX</code></a>.</li>
+          <li><strong>Redis 7.0.0:</strong> <a href="https://redis.io/docs/latest/commands/lmpop/"><code>LMPOP</code></a>, <a href="https://redis.io/docs/latest/commands/function-load/"><code>FUNCTION LOAD</code></a> (Redis Functions), and sharded pub/sub <a href="https://redis.io/docs/latest/commands/spublish/"><code>SPUBLISH</code></a>. The <a href="https://redis.io/docs/latest/commands/expire/"><code>EXPIRE</code></a> options <code>NX</code>, <code>XX</code>, <code>GT</code>, and <code>LT</code> were also added in 7.0.0.</li>
+          <li><strong>Redis 7.4.0:</strong> <a href="https://redis.io/docs/latest/commands/hexpire/"><code>HEXPIRE</code></a> (per-field expiration on hashes).</li>
+        </ul>
+        <p>If local development runs <code>redis:7.4</code> and CI runs <code>redis:6.2</code>, a feature that uses <code>HEXPIRE</code> or <code>EXPIRE key 60 NX</code> works on the laptop and returns an error from the server in CI. Reverse the drift (newer in CI, older in Compose or production) and CI passes on code that the older server rejects.</p>
+        <p>Persistence is the other one-way door. The <a href="https://github.com/redis/redis/blob/7.0.0/00-RELEASENOTES">Redis 7.0 release notes</a> say Redis 7 &ldquo;uses a new version 10 format for RDB files, which is incompatible with older versions,&rdquo; and that Redis 7 stores AOF as multiple files in a folder. If a Compose named volume holds an RDB file written by a 7.x container, a 6.2 container cannot load it. Moving a dev volume <em>back</em> to an older major is not a tag change; it is a data reset. CI service containers are usually throwaway, so this mostly bites the Compose side.</p>
+        <p>If you are moving between Redis and Valkey, treat that as a separate migration with its own release notes. This guide does not compare the two.</p>
+        <h2>Pin, and keep one source of truth</h2>
+        <ol>
+          <li><strong>Pick a granularity on purpose.</strong> <code>redis:7.4-alpine</code> pins major and minor and still takes patch releases. <code>redis:7-alpine</code> follows the latest 7.x. <code>redis</code> / <code>redis:latest</code> follows whatever the newest release is.</li>
+          <li><strong>Use the same tag in both files.</strong> The Compose service and the workflow service should carry the identical string, or one should be derived from the other.</li>
+          <li><strong>Keep the health check.</strong> GitHub&rsquo;s example adds <code>--health-cmd "redis-cli ping"</code> so the job waits until Redis answers.</li>
+          <li><strong>Upgrade both in one pull request</strong> and read the release notes for every major you cross.</li>
+        </ol>
+        <pre><code># docker-compose.yml
+services:
+  redis:
+    image: redis:7.4-alpine
+
+# .github/workflows/ci.yml
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      redis:
+        image: redis:7.4-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5</code></pre>
+        <p>Two files with one string is still two declarations. The point of a check is to fail the pull request that changes only one of them.</p>
+        <h2>How ServiceGate catches this</h2>
+        <p>Behavior below was confirmed by running the ServiceGate 0.1.0 CLI and the Lite Action&rsquo;s scanner against small test repositories on 15 November 2026:</p>
+        <ul>
+          <li><strong>Major drift (error).</strong> Compose <code>redis:7.4-alpine</code> vs workflow service <code>redis:6.2-alpine</code> fails with <code>Redis major versions disagree: 7.4 (docker-compose.yml:3, compose redis); 6.2 (.github/workflows/ci.yml:8, workflow redis).</code> A Compose default such as <code>redis:${REDIS_VERSION:-7.4}-alpine</code> is resolved and compared the same way.</li>
+          <li><strong>Minor drift (warning).</strong> <code>redis:7.2</code> vs <code>redis:7.4</code> is reported as a minor/patch disagreement. It does not fail the job, even though 7.4 added <code>HEXPIRE</code>.</li>
+          <li><strong>Unpinned image (warning; error with <code>--strict-pins</code> in the CLI).</strong> <code>redis</code>, <code>redis:latest</code>, or a non-version tag like <code>alpine</code>. Because <code>latest</code> has no version to compare, <code>redis:7</code> vs <code>redis:latest</code> is this warning, not a drift error.</li>
+          <li><strong>Missing health check (warning).</strong> A Redis service in GitHub Actions with no <code>--health-cmd</code>.</li>
+        </ul>
+        <p>The Redis family includes <code>redis</code>, <code>bitnami/redis</code>, <code>redis/redis-stack</code>, <code>redis/redis-stack-server</code>, <code>cimg/redis</code>, and <code>circleci/redis</code>. Valkey images are a separate family and are not compared to Redis. A workflow image written as an expression, such as <code>${{ vars.REDIS_IMAGE }}</code>, is skipped. ServiceGate compares tags in your files; it does not pull images, resolve what <code>latest</code> points to, or test command compatibility.</p>
+        <p>The free <a href="https://github.com/ESS2292/servicegate-action">ServiceGate Lite Action</a> runs these checks on Compose files and GitHub Actions <code>services:</code>, without <code>--strict-pins</code>. The full CLI also reads Dockerfiles, Testcontainers literals, and committed <code>.env.example</code> version variables (for example a <code>REDIS_VERSION</code> that a Compose <code>${REDIS_VERSION}</code> refers to). Checkout is not live.</p>
+      </section>
+      <section class="cta-box" aria-label="ServiceGate">
+        <h2>Want the check in CI?</h2>
+        <p>The free <a href="https://github.com/ESS2292/servicegate-action">ServiceGate Lite GitHub Action</a> compares Compose files to GitHub Actions service images. The full <strong>ServiceGate CLI</strong> also reads Dockerfiles, Testcontainers literals, and committed <code>.env.example</code> version variables, with a JSON report, locally or in any CI. Checkout is not live.</p>
+        <p><strong>$19 one-time</strong> &middot; Node 18+ &middot; zero runtime dependencies &middot; MIT source included. Checkout is not live.</p>
+        <p><a class="cta-link" href="../index.html#pricing">See ServiceGate &rarr;</a></p>
+      </section>
+      <section>
+        <h2>Related guides</h2>
+        <ul>
+          <li><a href="compose-vs-github-actions-postgres.html">Do your Compose file and GitHub Actions agree on Postgres?</a></li>
+          <li><a href="testcontainers-vs-compose-postgres.html">When Testcontainers and Compose pin different Postgres majors</a></li>
+        </ul>
+      </section>
+    </main>
+    <footer>
+      <nav class="family-nav" aria-label="Other tools in this family">
+        <span class="family-label">Also:</span>
+          <a href="https://ess2292.github.io/envgate/">EnvGate</a>
+          <a href="https://ess2292.github.io/runtimegate/">RuntimeGate</a>
+          <a href="https://ess2292.github.io/lockgate/">LockGate</a>
+          <a href="https://ess2292.github.io/servicegate/" aria-current="page">ServiceGate</a>
+      </nav>
+<div class="footer-row">
+        <div>ServiceGate 0.1.0 by Emilio Straubel · pre-launch pages, not indexed</div>
+        <div class="footer-links">
+          <a href="../index.html">Home</a>
+          <a href="index.html" aria-current="page">Guides</a>
+          <a href="../privacy.html">Privacy</a>
+          <a href="../terms.html">Terms</a>
+          <a href="https://github.com/ESS2292/servicegate-action">Lite Action</a>
+          <a href="https://github.com/ESS2292/servicegate-action/issues">Issues</a>
+        </div>
+      </div>
+    </footer>
+  </div>
+</body>
+</html>
