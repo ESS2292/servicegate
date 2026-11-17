@@ -4,7 +4,7 @@ This folder is the public GitHub Pages site for ServiceGate, served at https://e
 
 The site stays **noindex**. Every HTML page includes `<meta name="robots" content="noindex">` and `robots.txt` disallows all crawlers. Do not replace `robots.txt` with `robots.launch.txt`, and do not remove `noindex`, until launch is approved.
 
-The buy button stays disabled while `data-checkout-url` is empty. Do not point it at a test-mode checkout on this public site, and do not set a live Lemon Squeezy URL until publish approval.
+The buy button stays disabled while `data-checkout-url` is empty. Do not point it at a test-mode checkout on this public site, and do not set a live checkout URL until publish approval.
 
 Support contact on these pages links to GitHub Issues on [ESS2292/servicegate-action](https://github.com/ESS2292/servicegate-action/issues). Do not invent a support email.
 
