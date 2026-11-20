@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MySQL version drift between docker-compose.yml and GitHub Actions services — ServiceGate Guides</title>
+  <meta name="description" content="mysql:8.0 in Compose and mysql:8.4 or mysql:latest in CI are different servers. What those tags resolve to today, the 8.4 auth and option changes that break containers, and how to keep one pin." />
+  <meta name="author" content="Emilio Straubel" />
+  <meta name="robots" content="noindex" />
+  <meta property="og:title" content="MySQL version drift between docker-compose.yml and GitHub Actions services — ServiceGate Guides" />
+  <meta property="og:description" content="mysql:8.0 in Compose and mysql:8.4 or mysql:latest in CI are different servers. What those tags resolve to today, the 8.4 auth and option changes that break containers, and how to keep one pin." />
+  <meta property="og:type" content="article" />
+  <meta property="og:site_name" content="ServiceGate" />
+  <meta property="og:url" content="https://ess2292.github.io/servicegate/guides/mysql-version-compose-vs-github-actions.html" />
+  <link rel="canonical" href="https://ess2292.github.io/servicegate/guides/mysql-version-compose-vs-github-actions.html" />
+  <meta property="og:image" content="https://ess2292.github.io/servicegate/og-image.png" />
+  <meta property="og:image:type" content="image/png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="ServiceGate — fail CI when Compose and Actions disagree on Postgres" />
+  <meta property="article:published_time" content="2026-11-20" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="MySQL version drift between docker-compose.yml and GitHub Actions services — ServiceGate Guides" />
+  <meta name="twitter:description" content="mysql:8.0 in Compose and mysql:8.4 or mysql:latest in CI are different servers. What those tags resolve to today, the 8.4 auth and option changes that break containers, and how to keep one pin." />
+  <meta name="twitter:image" content="https://ess2292.github.io/servicegate/og-image.png" />
+  <meta name="twitter:image:alt" content="ServiceGate — fail CI when Compose and Actions disagree on Postgres" />
+  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "TechArticle", "headline": "MySQL version drift between docker-compose.yml and GitHub Actions services", "description": "mysql:8.0 in Compose and mysql:8.4 or mysql:latest in CI are different servers. What those tags resolve to today, the 8.4 auth and option changes that break containers, and how to keep one pin.", "author": {"@type": "Person", "name": "Emilio Straubel"}, "datePublished": "2026-11-20", "dateModified": "2026-11-20", "mainEntityOfPage": "https://ess2292.github.io/servicegate/guides/mysql-version-compose-vs-github-actions.html", "publisher": {"@type": "Person", "name": "Emilio Straubel"}, "image": "https://ess2292.github.io/servicegate/og-image.png"}</script>
+  <meta name="theme-color" content="#0b1220" />
+  <link rel="icon" href="../favicon.svg" type="image/svg+xml" />
+  <link rel="icon" href="../favicon-32.png" type="image/png" sizes="32x32" />
+  <link rel="apple-touch-icon" href="../apple-touch-icon.png" />
+  <link rel="stylesheet" href="../styles.css" />
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <div class="wrap">
+    <nav class="site-nav" aria-label="Primary">
+      <a class="brand" href="../index.html">
+        <span class="brand-mark" aria-hidden="true">sg</span>
+        ServiceGate
+      </a>
+      <ul class="nav-links">
+        <li><a href="../index.html#checks">What it checks</a></li>
+        <li><a href="../index.html#ci">CI</a></li>
+        <li><a href="../index.html#limits">Limits</a></li>
+        <li><a href="../index.html#pricing">Pricing</a></li>
+        <li><a href="index.html" aria-current="page">Guides</a></li>
+        <li><a href="../index.html#faq">FAQ</a></li>
+        <li><a href="https://github.com/ESS2292/servicegate-action">Lite Action</a></li>
+      </ul>
+    </nav>
+    <main id="main" class="article">
+      <p class="crumbs"><a href="../index.html">ServiceGate</a> / <a href="index.html">Guides</a></p>
+      <section>
+        <div class="eyebrow">Guide &middot; November 20, 2026</div>
+        <h1>MySQL version drift between docker-compose.yml and GitHub Actions services</h1>
+        <p class="lead">A Compose file that says <code>mysql:8.0</code> and a workflow service that says <code>mysql:8.4</code>, <code>mysql:9.7</code>, or <code>mysql:latest</code> are not running the same server. Since MySQL 8.4, that gap includes a server option that no longer exists and an authentication plugin that is off by default.</p>
+        <h2>What the tags point to today</h2>
+        <p>Floating Docker tags move. According to the official <a href="https://hub.docker.com/_/mysql">mysql image on Docker Hub</a> (tag digests compared through the Docker Hub API on 20 November 2026):</p>
+        <table class="compare">
+          <thead>
+            <tr><th>Tag</th><th>Resolves to</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>mysql</code>, <code>mysql:latest</code>, <code>mysql:innovation</code>, <code>mysql:26</code></td><td>26.10.0</td></tr>
+            <tr><td><code>mysql:lts</code>, <code>mysql:9</code>, <code>mysql:9.7</code></td><td>9.7.4</td></tr>
+            <tr><td><code>mysql:8</code>, <code>mysql:8.4</code></td><td>8.4.13</td></tr>
+            <tr><td><code>mysql:8.0</code></td><td>8.0.46 (last updated 5 May 2026)</td></tr>
+          </tbody>
+        </table>
+        <p>Two things in that table surprise people. First, <code>mysql:8</code> is 8.4, not 8.0, so &ldquo;we&rsquo;re on 8&rdquo; can mean either series depending on which file you read. Second, <code>latest</code> follows the Innovation track, not the long-term-support track: it is a different server from <code>mysql:lts</code>. The <a href="https://dev.mysql.com/doc/relnotes/mysql/8.0/en/">MySQL 8.0 release notes</a> say 8.0 reached end of life in April 2026 with 8.0.46, and Oracle&rsquo;s <a href="https://www.mysql.com/support/eol-notice.html">EOL notice</a> points 8.0 users to 8.4 LTS or 9.7 LTS. A Compose file still on <code>mysql:8.0</code> next to a CI service someone already moved forward is a common shape for this drift.</p>
+        <h2>Differences that actually break things</h2>
+        <ul>
+          <li><strong>A removed server option stops the container.</strong> Many 8.0-era Compose files pass <code>--default-authentication-plugin=mysql_native_password</code>. That option was removed in 8.4. In <a href="https://github.com/docker-library/mysql/issues/1048">docker-library/mysql issue #1048</a>, a maintainer shows <code>mysql:8.4.0</code> exiting with <code>[ERROR] [MY-000067] [Server] unknown variable 'default-authentication-plugin=mysql_native_password'.</code> followed by <code>[ERROR] [MY-010119] [Server] Aborting</code>. The same <code>command:</code> line works on <code>mysql:8.0</code>.</li>
+          <li><strong><code>mysql_native_password</code> is off by default in 8.4 and gone in 9.0.</strong> The MySQL 8.4 manual page on <a href="https://dev.mysql.com/doc/refman/8.4/en/native-pluggable-authentication.html">Native Pluggable Authentication</a> says the plugin is &ldquo;deprecated as of MySQL 8.0.34, disabled by default in MySQL 8.4, and removed as of MySQL 9.0.0.&rdquo; On 8.4, creating or altering a user with it fails with <code>ERROR 1524 (HY000): Plugin 'mysql_native_password' is not loaded</code>, and existing accounts that use it cannot log in. It can be re-enabled on 8.4 with <code>--mysql-native-password=ON</code>; on 9.x and later there is no plugin to enable. A CI init script that creates a native-password user passes on <code>mysql:8.0</code> and fails on <code>mysql:8.4</code> or <code>mysql:latest</code>.</li>
+          <li><strong>A Compose volume does not go backwards.</strong> The MySQL 8.4 <a href="https://dev.mysql.com/doc/refman/8.4/en/downgrading.html">downgrade chapter</a> lists in-place downgrade only within an LTS series. Going from 8.4 to 8.0 is supported only by logical dump and load or replication, and only for rollback. If a named volume was opened once by an 8.4 or newer container, switching that Compose service back to <code>mysql:8.0</code> is a data reset or a dump and restore, not a tag edit. CI service containers are usually throwaway, so this mostly bites the Compose side.</li>
+        </ul>
+        <p>Those are the breaks with exact, documented error text. The <a href="https://dev.mysql.com/doc/refman/8.4/en/mysql-nutshell.html">What Is New in MySQL 8.4 since MySQL 8.0</a> page lists more changes (InnoDB defaults, removed options, removed keywords). Read it, and the release notes for every series you cross, before moving either file.</p>
+        <h2>Pin, and keep one source of truth</h2>
+        <ol>
+          <li><strong>Pick a series on purpose.</strong> <code>mysql:8.4</code> or <code>mysql:9.7</code> stays on an LTS series and still takes patch releases. <code>mysql:latest</code> follows Innovation releases, which MySQL supports only until the next one.</li>
+          <li><strong>Use the same tag everywhere it is declared.</strong> Compose, the workflow <code>services:</code> block, any database Dockerfile, and the <code>MYSQL_VERSION</code> in <code>.env.example</code> should say the same thing.</li>
+          <li><strong>Drop removed options when you move to 8.4.</strong> Delete <code>--default-authentication-plugin</code>; if you still need native passwords for a while, use <code>--mysql-native-password=ON</code> on 8.4 and plan the move to <code>caching_sha2_password</code> before 9.x.</li>
+          <li><strong>Upgrade every file in one pull request.</strong></li>
+        </ol>
+        <pre><code># .env.example
+MYSQL_VERSION=8.4
+
+# docker-compose.yml
+services:
+  db:
+    image: mysql:${MYSQL_VERSION:-8.4}
+
+# docker/db/Dockerfile
+FROM mysql:8.4
+
+# .github/workflows/ci.yml
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: app
+        ports:
+          - 3306:3306
+        options: &gt;-
+          --health-cmd "mysqladmin ping -h 127.0.0.1"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5</code></pre>
+        <p>Four files with one string is still four declarations. The point of a check is to fail the pull request that changes only one of them.</p>
+        <h2>How ServiceGate catches this</h2>
+        <p>The output below is copied from the ServiceGate 0.1.0 CLI (<code>servicegate check</code>), run against small test repositories on 20 November 2026.</p>
+        <p><strong>Major drift fails the job.</strong> <code>.env.example</code> sets <code>MYSQL_VERSION=8.4</code>, Compose uses <code>mysql:${MYSQL_VERSION}</code>, the workflow service is <code>mysql:9.7</code>, and a database Dockerfile still says <code>FROM mysql:8.0</code>. Exit code 1:</p>
+        <pre><code>ServiceGate checked 4 service image pins across 1 service family.
+
+Errors (1):
+  [version-drift] MySQL major versions disagree: 8.4 (docker-compose.yml:3, compose db); 9.7 (.github/workflows/ci.yml:8, workflow mysql); 8.0 (docker/db/Dockerfile:1, dockerfile); 8.4 (.env.example:1, MYSQL_VERSION).</code></pre>
+        <p><strong>8.0 vs 8.4 is a warning, not a failure.</strong> Compose <code>mysql:8.0</code> and workflow service <code>mysql:8.4</code>. Exit code 0:</p>
+        <pre><code>ServiceGate checked 2 service image pins across 1 service family.
+
+Warnings (1):
+  [minor-drift] MySQL 8 pins disagree on minor/patch: 8.0 (docker-compose.yml:3, compose db); 8.4 (.github/workflows/ci.yml:8, workflow mysql).</code></pre>
+        <p>To be clear about this limit: ServiceGate fails on a different leading version number. For MySQL, 8.0 and 8.4 share a leading 8 even though the authentication change above landed between them, so this case is reported but does not fail CI. Treat this warning as a real problem for MySQL.</p>
+        <p><strong>Unpinned images are warnings (errors with <code>--strict-pins</code>).</strong> <code>mysql</code> in Compose and <code>mysql:latest</code> in CI. Exit code 0 by default, 1 with <code>--strict-pins</code>:</p>
+        <pre><code>ServiceGate checked 2 service image pins across 1 service family.
+
+Warnings (2):
+  [unpinned-image] MySQL image is unpinned (latest) at docker-compose.yml:3 (compose). Pin a numeric major tag instead of 'latest'.
+  [unpinned-image] MySQL image is unpinned (latest) at .github/workflows/ci.yml:8 (workflow). Pin a numeric major tag instead of 'latest'.</code></pre>
+        <p><strong>After the fix above</strong> (all four declarations on 8.4). Exit code 0:</p>
+        <pre><code>ServiceGate checked 4 service image pins across 1 service family.
+OK — Compose, CI, and test service images agree.</code></pre>
+        <p>The MySQL family includes <code>mysql</code>, <code>bitnami/mysql</code>, <code>mysql/mysql-server</code>, <code>cimg/mysql</code>, and <code>circleci/mysql</code>. MariaDB images are a separate family and are not compared to MySQL. ServiceGate compares tags in your files; it does not pull images, resolve what <code>latest</code> points to, read <code>command:</code> flags, or test authentication.</p>
+        <p>The free <a href="https://github.com/ESS2292/servicegate-action">ServiceGate Lite Action</a> runs these checks on Compose files and GitHub Actions <code>services:</code>, without <code>--strict-pins</code>. The full CLI also reads Dockerfiles, Testcontainers literals, and committed <code>.env.example</code> version variables, as in the first example above. Checkout is not live.</p>
+      </section>
+      <section class="cta-box" aria-label="ServiceGate">
+        <h2>Want the check in CI?</h2>
+        <p>The free <a href="https://github.com/ESS2292/servicegate-action">ServiceGate Lite GitHub Action</a> compares Compose files to GitHub Actions service images. The full <strong>ServiceGate CLI</strong> also reads Dockerfiles, Testcontainers literals, and committed <code>.env.example</code> version variables, with a JSON report, locally or in any CI. Checkout is not live.</p>
+        <p><strong>$19 one-time</strong> &middot; Node 18+ &middot; zero runtime dependencies &middot; MIT source included. Checkout is not live.</p>
+        <p><a class="cta-link" href="../index.html#pricing">See ServiceGate &rarr;</a></p>
+      </section>
+      <section>
+        <h2>Related guides</h2>
+        <ul>
+          <li><a href="compose-vs-github-actions-postgres.html">Do your Compose file and GitHub Actions agree on Postgres?</a></li>
+          <li><a href="redis-version-compose-vs-github-actions.html">Redis version drift between docker-compose.yml and GitHub Actions services</a></li>
+        </ul>
+      </section>
+    </main>
+    <footer>
+      <nav class="family-nav" aria-label="Other tools in this family">
+        <span class="family-label">Also:</span>
+          <a href="https://ess2292.github.io/envgate/">EnvGate</a>
+          <a href="https://ess2292.github.io/runtimegate/">RuntimeGate</a>
+          <a href="https://ess2292.github.io/lockgate/">LockGate</a>
+          <a href="https://ess2292.github.io/servicegate/" aria-current="page">ServiceGate</a>
+      </nav>
+<div class="footer-row">
+        <div>ServiceGate 0.1.0 by Emilio Straubel · pre-launch pages, not indexed</div>
+        <div class="footer-links">
+          <a href="../index.html">Home</a>
+          <a href="index.html" aria-current="page">Guides</a>
+          <a href="../privacy.html">Privacy</a>
+          <a href="../terms.html">Terms</a>
+          <a href="https://github.com/ESS2292/servicegate-action">Lite Action</a>
+          <a href="https://github.com/ESS2292/servicegate-action/issues">Issues</a>
+        </div>
+      </div>
+    </footer>
+  </div>
+</body>
+</html>

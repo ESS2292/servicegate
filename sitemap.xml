@@ -4,9 +4,10 @@
   <url><loc>https://ess2292.github.io/servicegate/</loc><lastmod>2026-11-10</lastmod></url>
   <url><loc>https://ess2292.github.io/servicegate/privacy.html</loc><lastmod>2026-11-10</lastmod></url>
   <url><loc>https://ess2292.github.io/servicegate/terms.html</loc><lastmod>2026-11-10</lastmod></url>
-  <url><loc>https://ess2292.github.io/servicegate/guides/</loc><lastmod>2026-11-15</lastmod></url>
+  <url><loc>https://ess2292.github.io/servicegate/guides/</loc><lastmod>2026-11-20</lastmod></url>
   <url><loc>https://ess2292.github.io/servicegate/guides/compose-vs-github-actions-postgres.html</loc><lastmod>2026-11-10</lastmod></url>
   <url><loc>https://ess2292.github.io/servicegate/guides/testcontainers-vs-compose-postgres.html</loc><lastmod>2026-11-10</lastmod></url>
   <url><loc>https://ess2292.github.io/servicegate/guides/pg-dump-client-server-version-mismatch.html</loc><lastmod>2026-11-10</lastmod></url>
   <url><loc>https://ess2292.github.io/servicegate/guides/redis-version-compose-vs-github-actions.html</loc><lastmod>2026-11-15</lastmod></url>
+  <url><loc>https://ess2292.github.io/servicegate/guides/mysql-version-compose-vs-github-actions.html</loc><lastmod>2026-11-20</lastmod></url>
 </urlset>

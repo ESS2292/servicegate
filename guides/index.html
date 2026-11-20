@@ -24,7 +24,7 @@
   <meta name="twitter:description" content="Practical guides on Compose and GitHub Actions disagreeing on Postgres, Testcontainers pinning a different major than Compose, and pg_dump failing when the client and the service are different majors." />
   <meta name="twitter:image" content="https://ess2292.github.io/servicegate/og-image.png" />
   <meta name="twitter:image:alt" content="ServiceGate — fail CI when Compose and Actions disagree on Postgres" />
-  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "TechArticle", "headline": "Service image pin agreement guides", "description": "Practical guides on Compose and GitHub Actions disagreeing on Postgres, Testcontainers pinning a different major than Compose, and pg_dump failing when the client and the service are different majors.", "author": {"@type": "Person", "name": "Emilio Straubel"}, "datePublished": "2026-11-10", "dateModified": "2026-11-15", "mainEntityOfPage": "https://ess2292.github.io/servicegate/guides/", "publisher": {"@type": "Person", "name": "Emilio Straubel"}, "image": "https://ess2292.github.io/servicegate/og-image.png"}</script>
+  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "TechArticle", "headline": "Service image pin agreement guides", "description": "Practical guides on Compose and GitHub Actions disagreeing on Postgres, Testcontainers pinning a different major than Compose, and pg_dump failing when the client and the service are different majors.", "author": {"@type": "Person", "name": "Emilio Straubel"}, "datePublished": "2026-11-10", "dateModified": "2026-11-20", "mainEntityOfPage": "https://ess2292.github.io/servicegate/guides/", "publisher": {"@type": "Person", "name": "Emilio Straubel"}, "image": "https://ess2292.github.io/servicegate/og-image.png"}</script>
   <meta name="theme-color" content="#0b1220" />
   <link rel="icon" href="../favicon.svg" type="image/svg+xml" />
   <link rel="icon" href="../favicon-32.png" type="image/png" sizes="32x32" />
@@ -52,9 +52,9 @@
     <main id="main" class="article">
       <p class="crumbs"><a href="../index.html">ServiceGate</a> / <a href="index.html">Guides</a></p>
       <section>
-        <div class="eyebrow">Guides &middot; Updated November 15, 2026</div>
+        <div class="eyebrow">Guides &middot; Updated November 20, 2026</div>
         <h1>Service image pin agreement guides</h1>
-        <p class="lead">How to keep Docker Compose, GitHub Actions service containers, and tests on the same Postgres or Redis major.</p>
+        <p class="lead">How to keep Docker Compose, GitHub Actions service containers, and tests on the same Postgres, Redis, or MySQL version.</p>
         <p>These guides are public but pre-launch, and should not be indexed. Facts about official docs, cited issues, commits, and Stack Overflow statistics were checked on 10 November 2026.</p>
       </section>
       <div class="guide-list">
@@ -73,6 +73,10 @@
         <article class="guide-card">
           <h2><a href="redis-version-compose-vs-github-actions.html">Redis version drift between docker-compose.yml and GitHub Actions services</a></h2>
           <p>What redis:7, redis:6.2, and redis:latest resolve to today, which Redis commands and RDB formats actually differ across them, and how to keep one pin.</p>
+        </article>
+        <article class="guide-card">
+          <h2><a href="mysql-version-compose-vs-github-actions.html">MySQL version drift between docker-compose.yml and GitHub Actions services</a></h2>
+          <p>What mysql:8.0, mysql:8, and mysql:latest resolve to today, why an 8.0 Compose file breaks on 8.4 (removed option, mysql_native_password), and how to keep one pin.</p>
         </article>
       </div>
       <section class="cta-box" aria-label="ServiceGate">
