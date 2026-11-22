@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Postgres "database files are incompatible with server" after a major version change in Compose or CI — ServiceGate Guides</title>
+  <meta name="description" content="postgres:latest is PostgreSQL 19 now. Real output of the FATAL error when a Compose volume meets a different major, the 18+ PGDATA change, why CI stays green, and how to keep one pin." />
+  <meta name="author" content="Emilio Straubel" />
+  <meta name="robots" content="noindex" />
+  <meta property="og:title" content="Postgres &quot;database files are incompatible with server&quot; after a major version change in Compose or CI — ServiceGate Guides" />
+  <meta property="og:description" content="postgres:latest is PostgreSQL 19 now. Real output of the FATAL error when a Compose volume meets a different major, the 18+ PGDATA change, why CI stays green, and how to keep one pin." />
+  <meta property="og:type" content="article" />
+  <meta property="og:site_name" content="ServiceGate" />
+  <meta property="og:url" content="https://ess2292.github.io/servicegate/guides/postgres-database-files-incompatible-with-server.html" />
+  <link rel="canonical" href="https://ess2292.github.io/servicegate/guides/postgres-database-files-incompatible-with-server.html" />
+  <meta property="og:image" content="https://ess2292.github.io/servicegate/og-image.png" />
+  <meta property="og:image:type" content="image/png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="ServiceGate — fail CI when Compose and Actions disagree on Postgres" />
+  <meta property="article:published_time" content="2026-11-22" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Postgres &quot;database files are incompatible with server&quot; after a major version change in Compose or CI — ServiceGate Guides" />
+  <meta name="twitter:description" content="postgres:latest is PostgreSQL 19 now. Real output of the FATAL error when a Compose volume meets a different major, the 18+ PGDATA change, why CI stays green, and how to keep one pin." />
+  <meta name="twitter:image" content="https://ess2292.github.io/servicegate/og-image.png" />
+  <meta name="twitter:image:alt" content="ServiceGate — fail CI when Compose and Actions disagree on Postgres" />
+  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "TechArticle", "headline": "Postgres \"database files are incompatible with server\" after a major version change in Compose or CI", "description": "postgres:latest is PostgreSQL 19 now. Real output of the FATAL error when a Compose volume meets a different major, the 18+ PGDATA change, why CI stays green, and how to keep one pin.", "author": {"@type": "Person", "name": "Emilio Straubel"}, "datePublished": "2026-11-22", "dateModified": "2026-11-22", "mainEntityOfPage": "https://ess2292.github.io/servicegate/guides/postgres-database-files-incompatible-with-server.html", "publisher": {"@type": "Person", "name": "Emilio Straubel"}, "image": "https://ess2292.github.io/servicegate/og-image.png"}</script>
+  <meta name="theme-color" content="#0b1220" />
+  <link rel="icon" href="../favicon.svg" type="image/svg+xml" />
+  <link rel="icon" href="../favicon-32.png" type="image/png" sizes="32x32" />
+  <link rel="apple-touch-icon" href="../apple-touch-icon.png" />
+  <link rel="stylesheet" href="../styles.css" />
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <div class="wrap">
+    <nav class="site-nav" aria-label="Primary">
+      <a class="brand" href="../index.html">
+        <span class="brand-mark" aria-hidden="true">sg</span>
+        ServiceGate
+      </a>
+      <ul class="nav-links">
+        <li><a href="../index.html#checks">What it checks</a></li>
+        <li><a href="../index.html#ci">CI</a></li>
+        <li><a href="../index.html#limits">Limits</a></li>
+        <li><a href="../index.html#pricing">Pricing</a></li>
+        <li><a href="index.html" aria-current="page">Guides</a></li>
+        <li><a href="../index.html#faq">FAQ</a></li>
+        <li><a href="https://github.com/ESS2292/servicegate-action">Lite Action</a></li>
+      </ul>
+    </nav>
+    <main id="main" class="article">
+      <p class="crumbs"><a href="../index.html">ServiceGate</a> / <a href="index.html">Guides</a></p>
+      <section>
+        <div class="eyebrow">Guide &middot; November 22, 2026</div>
+        <h1>Postgres &ldquo;database files are incompatible with server&rdquo; after a major version change in Compose or CI</h1>
+        <p class="lead">A Postgres data directory belongs to one major version. When a Compose file, a workflow, or <code>postgres:latest</code> moves to a different major while an old volume is still attached, the server refuses to start. CI rarely notices, because service containers start empty for each job.</p>
+        <h2>The error</h2>
+        <p>This is the real output from starting the PostgreSQL 17.12 server on a data directory created by PostgreSQL 16.16 (run on 22 November 2026; how it was run is explained below):</p>
+        <pre><code>FATAL:  database files are incompatible with server
+DETAIL:  The data directory was initialized by PostgreSQL version 16, which is not compatible with this version 17.12 (Debian 17.12-1.pgdg13+1).</code></pre>
+        <p>The PostgreSQL docs on <a href="https://www.postgresql.org/docs/current/upgrading.html">upgrading a cluster</a> explain why: &ldquo;Minor releases never change the internal storage format and are always compatible with earlier and later minor releases of the same major version number.&rdquo; For major releases, &ldquo;the internal data storage format is subject to change,&rdquo; so moving data needs a dump and restore, <code>pg_upgrade</code>, or replication. The same page notes that checks prevent a data directory from being used with an incompatible version, &ldquo;so no great harm can be done by trying to start the wrong server version.&rdquo; The server stops; it does not corrupt the volume.</p>
+        <h2>What the tags point to today</h2>
+        <p>Checked on 22 November 2026 through the Docker Hub registry API (linux/amd64 image config of the official <a href="https://hub.docker.com/_/postgres">postgres image</a>):</p>
+        <table class="compare">
+          <thead>
+            <tr><th>Tag</th><th>PG_VERSION</th><th>PGDATA / VOLUME</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>postgres</code>, <code>postgres:latest</code>, <code>postgres:19</code></td><td>19.0-1.pgdg13+1</td><td><code>/var/lib/postgresql/19/docker</code> / <code>/var/lib/postgresql</code></td></tr>
+            <tr><td><code>postgres:18</code>, <code>postgres:18.7</code></td><td>18.7-1.pgdg13+5</td><td><code>/var/lib/postgresql/18/docker</code> / <code>/var/lib/postgresql</code></td></tr>
+            <tr><td><code>postgres:17</code>, <code>postgres:17.12</code></td><td>17.12-1.pgdg13+1</td><td><code>/var/lib/postgresql/data</code> / <code>/var/lib/postgresql/data</code></td></tr>
+            <tr><td><code>postgres:16</code>, <code>postgres:16.16</code></td><td>16.16-1.pgdg13+1</td><td><code>/var/lib/postgresql/data</code> / <code>/var/lib/postgresql/data</code></td></tr>
+          </tbody>
+        </table>
+        <p>Two consequences. First, any Compose file or workflow that uses <code>postgres</code> or <code>postgres:latest</code> is now on PostgreSQL 19. A local volume that an earlier <code>latest</code> initialized (18, for example) will not start on it. Second, PostgreSQL 18 changed where the image keeps its data, which matters for Compose files written for 17 and earlier.</p>
+        <h2>Reproduced: upgrade, <code>latest</code>, and downgrade</h2>
+        <p>The test machine had no Docker. Instead, I ran the same server packages the official image installs. The image&rsquo;s <a href="https://github.com/docker-library/postgres/blob/431640c75318610961eabb6417cd3ea8140c643f/18/trixie/Dockerfile">Dockerfile</a> installs <code>postgresql-$PG_MAJOR</code> from <code>apt.postgresql.org</code> (trixie-pgdg). The 16.16-1.pgdg13+1, 17.12-1.pgdg13+1, and 18.7-1.pgdg13+5 packages match the image <code>PG_VERSION</code> values above exactly. For 19, the package was 19.0-2.pgdg13+1, while the image has 19.0-1.pgdg13+1. Each data directory was created with that major&rsquo;s <code>initdb</code>, then started with another major&rsquo;s <code>postgres</code> binary. Timestamps are removed below; nothing else is changed.</p>
+        <p><strong>Data from 16, server 18:</strong></p>
+        <pre><code>FATAL:  database files are incompatible with server
+DETAIL:  The data directory was initialized by PostgreSQL version 16, which is not compatible with this version 18.7 (Debian 18.7-1.pgdg13+5).</code></pre>
+        <p><strong>Data from 18, server 19</strong> (an old <code>latest</code> volume meeting today&rsquo;s <code>latest</code>):</p>
+        <pre><code>FATAL:  database files are incompatible with server
+DETAIL:  The data directory was initialized by PostgreSQL version 18, which is not compatible with this version 19.0 (Debian 19.0-2.pgdg13+1).</code></pre>
+        <p><strong>Going back: data from 18, server 16 or 17.</strong> Rolling a tag back fails even earlier. The <code>postgresql.conf</code> that 18&rsquo;s <code>initdb</code> wrote contains a setting the older servers do not recognize:</p>
+        <pre><code>LOG:  unrecognized configuration parameter "autovacuum_worker_slots" in file "/tmp/pgtest/d18/postgresql.conf" line 687
+FATAL:  configuration file "/tmp/pgtest/d18/postgresql.conf" contains errors</code></pre>
+        <p>With that file emptied, PostgreSQL 16 reports the same version check as above: <code>The data directory was initialized by PostgreSQL version 18, which is not compatible with this version 16.16 (Debian 16.16-1.pgdg13+1).</code> Downgrading a volume is a restore from a dump, not a tag edit.</p>
+        <p>In the official image, the entrypoint skips <code>initdb</code> when <code>$PGDATA/PG_VERSION</code> already exists and starts the server (<a href="https://github.com/docker-library/postgres/blob/431640c75318610961eabb6417cd3ea8140c643f/18/trixie/docker-entrypoint.sh#L244-L247">docker-entrypoint.sh</a>). That is where the server&rsquo;s own version check produces the FATAL lines above.</p>
+        <h2>The PostgreSQL 18+ image refuses old <code>/var/lib/postgresql/data</code> volumes</h2>
+        <p>The Docker Hub <code>PGDATA</code> notes say the variable &ldquo;was changed to be version specific in PostgreSQL 18 and above&rdquo; (<code>/var/lib/postgresql/18/docker</code>), and that &ldquo;the defined <code>VOLUME</code> was changed in 18 and above to <code>/var/lib/postgresql</code>.&rdquo; The registry check above confirms this for 18 and 19.</p>
+        <p>Most Compose files written for 17 and earlier mount <code>pgdata:/var/lib/postgresql/data</code>. After a bump to <code>postgres:18</code>, <code>postgres:19</code>, or <code>latest</code>, the 18+ <a href="https://github.com/docker-library/postgres/blob/431640c75318610961eabb6417cd3ea8140c643f/18/trixie/docker-entrypoint.sh#L248-L262">entrypoint</a> looks for a <code>PG_VERSION</code> file in <code>/var/lib/postgresql</code>, <code>/var/lib/postgresql/data</code>, and <code>/var/lib/postgresql/*/docker</code>. It also checks for a bare mount at <code>/var/lib/postgresql/data</code>. If it finds either, it <a href="https://github.com/docker-library/postgres/blob/431640c75318610961eabb6417cd3ea8140c643f/18/trixie/docker-entrypoint.sh#L141-L166">exits with status 1</a> and prints a message that starts:</p>
+        <pre><code>Error: in 18+, these Docker images are configured to store database data in a
+       format which is compatible with "pg_ctlcluster" (specifically, using
+       major-version-specific directory names).  This better reflects how
+       PostgreSQL itself works, and how upgrades are to be performed.</code></pre>
+        <p>It then lists the old data location and says this is &ldquo;usually the result of upgrading the Docker image without upgrading the underlying database using &lsquo;pg_upgrade&rsquo;,&rdquo; pointing to <a href="https://github.com/docker-library/postgres/issues/37">docker-library/postgres issue #37</a>. That text is quoted from the entrypoint source at the linked commit. I did not run it in a container for this guide.</p>
+        <h2>Why CI stays green while local Compose breaks</h2>
+        <p>GitHub&rsquo;s <a href="https://docs.github.com/en/actions/tutorials/use-containerized-services/use-docker-service-containers">service container docs</a> say: &ldquo;GitHub creates a fresh Docker container for each service configured in the workflow, and destroys the service container when the job completes.&rdquo; A workflow that moves to <code>postgres:18</code> runs <code>initdb</code> on an empty directory every time and passes. The developer whose Compose volume was initialized by 16 is the one who hits the FATAL line. The reverse also happens: Compose moves forward, CI stays behind, and tests pass against a server nobody runs locally. Either way, the two files disagree and nothing fails the pull request that caused it.</p>
+        <h2>Fix it</h2>
+        <ol>
+          <li><strong>Pin a major everywhere.</strong> Use <code>postgres:18</code> (or <code>18-alpine</code>) in Compose, the workflow <code>services:</code> block, Testcontainers, any database Dockerfile, and <code>POSTGRES_VERSION</code> in <code>.env.example</code>. A major tag still takes minor releases, which the docs say are storage-compatible.</li>
+          <li><strong>If the local data matters, move it.</strong> Start the old major again, run <code>pg_dumpall</code>, start the new major on an empty volume, and restore with <code>psql</code>. The <a href="https://www.postgresql.org/docs/current/upgrading.html">upgrade docs</a> recommend the newer version&rsquo;s dump tools. <code>pg_upgrade</code> is faster but needs both majors&rsquo; binaries side by side.</li>
+          <li><strong>If it is throwaway dev data, reset the volume.</strong> <code>docker compose down -v</code> removes named volumes declared in the Compose file (<a href="https://github.com/docker/compose/blob/main/docs/reference/compose_down.md">compose down reference</a>). This deletes the data.</li>
+          <li><strong>On 18+, mount <code>/var/lib/postgresql</code>, not <code>/var/lib/postgresql/data</code>.</strong> Use a new, empty volume, or move the old files into a <code>PG_MAJOR/docker</code> subdirectory, as the Docker Hub notes describe.</li>
+          <li><strong>Change every file in one pull request.</strong></li>
+        </ol>
+        <pre><code># .env.example
+POSTGRES_VERSION=18
+
+# docker-compose.yml
+services:
+  db:
+    image: postgres:${POSTGRES_VERSION:-18}
+    environment:
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - pgdata:/var/lib/postgresql
+volumes:
+  pgdata:
+
+# .github/workflows/ci.yml
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: &gt;-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+# test/db.test.js
+import { PostgreSqlContainer } from "@testcontainers/postgresql";
+const container = new PostgreSqlContainer("postgres:18-alpine");</code></pre>
+        <h2>How ServiceGate catches this</h2>
+        <p>The output below is copied from the ServiceGate 0.1.0 CLI (<code>servicegate check</code>), run against small test repositories on 22 November 2026.</p>
+        <p><strong>Major drift fails the job.</strong> <code>.env.example</code> sets <code>POSTGRES_VERSION=16</code>, Compose uses <code>postgres:${POSTGRES_VERSION}</code> with a named volume, the workflow service is <code>postgres:18</code>, and a Testcontainers test starts <code>postgres:17-alpine</code>. Exit code 1:</p>
+        <pre><code>ServiceGate checked 4 service image pins across 1 service family.
+
+Errors (1):
+  [version-drift] Postgres major versions disagree: 16 (docker-compose.yml:3, compose db); 18 (.github/workflows/ci.yml:8, workflow postgres); 16 (.env.example:1, POSTGRES_VERSION); 17 (test/db.test.js:2, source).</code></pre>
+        <p><strong>Unpinned images are warnings (errors with <code>--strict-pins</code>).</strong> <code>postgres</code> in Compose and <code>postgres:latest</code> in CI. Exit code 0 by default:</p>
+        <pre><code>ServiceGate checked 2 service image pins across 1 service family.
+
+Warnings (2):
+  [unpinned-image] Postgres image is unpinned (latest) at docker-compose.yml:3 (compose). Pin a numeric major tag instead of 'latest'.
+  [unpinned-image] Postgres image is unpinned (latest) at .github/workflows/ci.yml:8 (workflow). Pin a numeric major tag instead of 'latest'.</code></pre>
+        <p>With <code>--strict-pins</code>, the same two lines are listed under <code>Errors (2):</code> and the exit code is 1. Given that <code>latest</code> moved to 19, strict pins is the setting that would have caught it.</p>
+        <p><strong>After the fix above</strong> (everything on 18). Exit code 0:</p>
+        <pre><code>ServiceGate checked 3 service image pins across 1 service family.
+OK — Compose, CI, and test service images agree.</code></pre>
+        <h2>What ServiceGate does not detect</h2>
+        <ul>
+          <li><strong>It does not look at volumes.</strong> ServiceGate reads tags in committed files. It cannot see which major initialized a developer&rsquo;s local volume, so it cannot predict the FATAL error on a given machine. It only keeps the files in agreement, which stops the drift that leads to it.</li>
+          <li><strong>It does not check mount paths or <code>PGDATA</code>.</strong> A repository with <code>postgres:18</code> in Compose and CI, but the volume still mounted at <code>/var/lib/postgresql/data</code>, gets <code>OK — Compose, CI, and test service images agree.</code> (exit 0) in a test run. The 18+ entrypoint error above is not caught.</li>
+          <li><strong>It does not resolve <code>latest</code>.</strong> It flags the tag as unpinned. It does not know that <code>latest</code> means 19 today.</li>
+          <li><strong>Destructured CommonJS requires are missed in 0.1.0.</strong> In a test run, <code>const { PostgreSqlContainer } = require("@testcontainers/postgresql")</code> was not recognized as a Testcontainers file. The <code>postgres:17-alpine</code> literal was skipped, and only 3 pins were counted. ES <code>import</code> and <code>const tc = require(...)</code> were detected.</li>
+          <li><strong>Minor versions agree by design.</strong> <code>postgres:18</code> and <code>postgres:18.7-alpine</code> count as the same major. That matches Postgres storage compatibility, but extension or behaviour changes inside a major are out of scope.</li>
+        </ul>
+        <p>The free <a href="https://github.com/ESS2292/servicegate-action">ServiceGate Lite Action</a> runs these checks on Compose files and GitHub Actions <code>services:</code>, without <code>--strict-pins</code>. The full CLI also reads Dockerfiles, Testcontainers literals, and committed <code>.env.example</code> version variables, as in the first example above. Checkout is not live.</p>
+      </section>
+      <section class="cta-box" aria-label="ServiceGate">
+        <h2>Want the check in CI?</h2>
+        <p>The free <a href="https://github.com/ESS2292/servicegate-action">ServiceGate Lite GitHub Action</a> compares Compose files to GitHub Actions service images. The full <strong>ServiceGate CLI</strong> also reads Dockerfiles, Testcontainers literals, and committed <code>.env.example</code> version variables, with a JSON report, locally or in any CI. Checkout is not live.</p>
+        <p><strong>$19 one-time</strong> &middot; Node 18+ &middot; zero runtime dependencies &middot; MIT source included. Checkout is not live.</p>
+        <p><a class="cta-link" href="../index.html#pricing">See ServiceGate &rarr;</a></p>
+      </section>
+      <section>
+        <h2>Related guides</h2>
+        <ul>
+          <li><a href="compose-vs-github-actions-postgres.html">Do your Compose file and GitHub Actions agree on Postgres?</a></li>
+          <li><a href="testcontainers-vs-compose-postgres.html">When Testcontainers and Compose pin different Postgres majors</a></li>
+          <li><a href="pg-dump-client-server-version-mismatch.html">pg_dump failed because the client and the service were different majors</a></li>
+        </ul>
+      </section>
+    </main>
+    <footer>
+      <nav class="family-nav" aria-label="Other tools in this family">
+        <span class="family-label">Also:</span>
+          <a href="https://ess2292.github.io/envgate/">EnvGate</a>
+          <a href="https://ess2292.github.io/runtimegate/">RuntimeGate</a>
+          <a href="https://ess2292.github.io/lockgate/">LockGate</a>
+          <a href="https://ess2292.github.io/servicegate/" aria-current="page">ServiceGate</a>
+      </nav>
+<div class="footer-row">
+        <div>ServiceGate 0.1.0 by Emilio Straubel · pre-launch pages, not indexed</div>
+        <div class="footer-links">
+          <a href="../index.html">Home</a>
+          <a href="index.html" aria-current="page">Guides</a>
+          <a href="../privacy.html">Privacy</a>
+          <a href="../terms.html">Terms</a>
+          <a href="https://github.com/ESS2292/servicegate-action">Lite Action</a>
+          <a href="https://github.com/ESS2292/servicegate-action/issues">Issues</a>
+        </div>
+      </div>
+    </footer>
+  </div>
+</body>
+</html>
