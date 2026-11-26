@@ -24,7 +24,7 @@
   <meta name="twitter:description" content="Practical guides on Compose and GitHub Actions disagreeing on Postgres, Testcontainers pinning a different major than Compose, and pg_dump failing when the client and the service are different majors." />
   <meta name="twitter:image" content="https://ess2292.github.io/servicegate/og-image.png" />
   <meta name="twitter:image:alt" content="ServiceGate — fail CI when Compose and Actions disagree on Postgres" />
-  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "TechArticle", "headline": "Service image pin agreement guides", "description": "Practical guides on Compose and GitHub Actions disagreeing on Postgres, Testcontainers pinning a different major than Compose, and pg_dump failing when the client and the service are different majors.", "author": {"@type": "Person", "name": "Emilio Straubel"}, "datePublished": "2026-11-10", "dateModified": "2026-11-24", "mainEntityOfPage": "https://ess2292.github.io/servicegate/guides/", "publisher": {"@type": "Person", "name": "Emilio Straubel"}, "image": "https://ess2292.github.io/servicegate/og-image.png"}</script>
+  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "TechArticle", "headline": "Service image pin agreement guides", "description": "Practical guides on Compose and GitHub Actions disagreeing on Postgres, Testcontainers pinning a different major than Compose, and pg_dump failing when the client and the service are different majors.", "author": {"@type": "Person", "name": "Emilio Straubel"}, "datePublished": "2026-11-10", "dateModified": "2026-11-26", "mainEntityOfPage": "https://ess2292.github.io/servicegate/guides/", "publisher": {"@type": "Person", "name": "Emilio Straubel"}, "image": "https://ess2292.github.io/servicegate/og-image.png"}</script>
   <meta name="theme-color" content="#0b1220" />
   <link rel="icon" href="../favicon.svg" type="image/svg+xml" />
   <link rel="icon" href="../favicon-32.png" type="image/png" sizes="32x32" />
@@ -52,9 +52,9 @@
     <main id="main" class="article">
       <p class="crumbs"><a href="../index.html">ServiceGate</a> / <a href="index.html">Guides</a></p>
       <section>
-        <div class="eyebrow">Guides &middot; Updated November 24, 2026</div>
+        <div class="eyebrow">Guides &middot; Updated November 26, 2026</div>
         <h1>Service image pin agreement guides</h1>
-        <p class="lead">How to keep Docker Compose, GitHub Actions service containers, and tests on the same Postgres, Redis, or MySQL version.</p>
+        <p class="lead">How to keep Docker Compose, GitHub Actions service containers, and tests on the same Postgres, Redis, MySQL, or MongoDB version.</p>
         <p>These guides are public but pre-launch, and should not be indexed. Facts about official docs, cited issues, commits, and Stack Overflow statistics were checked on 10 November 2026.</p>
       </section>
       <div class="guide-list">
@@ -85,6 +85,10 @@
         <article class="guide-card">
           <h2><a href="redis-cant-handle-rdb-format-version.html">Redis &ldquo;Can&rsquo;t handle RDB format version&rdquo; after changing the image tag</a></h2>
           <p>Real output when an older Redis meets a newer dump.rdb, which releases changed the RDB format (redis:latest is 8.12.0 and writes version 17; even 7.2 &rarr; 7.4 broke it), and why CI stays green.</p>
+        </article>
+        <article class="guide-card">
+          <h2><a href="mongodb-invalid-featurecompatibilityversion.html">MongoDB &ldquo;UPGRADE PROBLEM: Found an invalid featureCompatibilityVersion&rdquo; after changing the mongo image tag</a></h2>
+          <p>Real exit-62 output when a volume skips a major (6.0 &rarr; 8.0) or goes back (8.3 &rarr; 8.0), the step-by-step setFeatureCompatibilityVersion fix with confirm: true, and why CI stays green (mongo:latest is 9.0.8).</p>
         </article>
       </div>
       <section class="cta-box" aria-label="ServiceGate">

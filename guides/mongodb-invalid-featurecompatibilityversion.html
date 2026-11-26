@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MongoDB &quot;UPGRADE PROBLEM: Found an invalid featureCompatibilityVersion&quot; after changing the mongo image tag — ServiceGate Guides</title>
+  <meta name="description" content="mongo:latest is MongoDB 9.0.8 and mongo:8 is 8.3. Real exit-62 output when a Compose volume skips a major or goes back, the one-step-at-a-time setFeatureCompatibilityVersion fix, and why CI stays green." />
+  <meta name="author" content="Emilio Straubel" />
+  <meta name="robots" content="noindex" />
+  <meta property="og:title" content="MongoDB &quot;UPGRADE PROBLEM: Found an invalid featureCompatibilityVersion&quot; after changing the mongo image tag — ServiceGate Guides" />
+  <meta property="og:description" content="mongo:latest is MongoDB 9.0.8 and mongo:8 is 8.3. Real exit-62 output when a Compose volume skips a major or goes back, the one-step-at-a-time setFeatureCompatibilityVersion fix, and why CI stays green." />
+  <meta property="og:type" content="article" />
+  <meta property="og:site_name" content="ServiceGate" />
+  <meta property="og:url" content="https://ess2292.github.io/servicegate/guides/mongodb-invalid-featurecompatibilityversion.html" />
+  <link rel="canonical" href="https://ess2292.github.io/servicegate/guides/mongodb-invalid-featurecompatibilityversion.html" />
+  <meta property="og:image" content="https://ess2292.github.io/servicegate/og-image.png" />
+  <meta property="og:image:type" content="image/png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="ServiceGate — fail CI when Compose and Actions disagree on Postgres" />
+  <meta property="article:published_time" content="2026-11-26" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="MongoDB &quot;UPGRADE PROBLEM: Found an invalid featureCompatibilityVersion&quot; after changing the mongo image tag — ServiceGate Guides" />
+  <meta name="twitter:description" content="mongo:latest is MongoDB 9.0.8 and mongo:8 is 8.3. Real exit-62 output when a Compose volume skips a major or goes back, the one-step-at-a-time setFeatureCompatibilityVersion fix, and why CI stays green." />
+  <meta name="twitter:image" content="https://ess2292.github.io/servicegate/og-image.png" />
+  <meta name="twitter:image:alt" content="ServiceGate — fail CI when Compose and Actions disagree on Postgres" />
+  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "TechArticle", "headline": "MongoDB \"UPGRADE PROBLEM: Found an invalid featureCompatibilityVersion\" after changing the mongo image tag", "description": "mongo:latest is MongoDB 9.0.8 and mongo:8 is 8.3. Real exit-62 output when a Compose volume skips a major or goes back, the one-step-at-a-time setFeatureCompatibilityVersion fix, and why CI stays green.", "author": {"@type": "Person", "name": "Emilio Straubel"}, "datePublished": "2026-11-26", "dateModified": "2026-11-26", "mainEntityOfPage": "https://ess2292.github.io/servicegate/guides/mongodb-invalid-featurecompatibilityversion.html", "publisher": {"@type": "Person", "name": "Emilio Straubel"}, "image": "https://ess2292.github.io/servicegate/og-image.png"}</script>
+  <meta name="theme-color" content="#0b1220" />
+  <link rel="icon" href="../favicon.svg" type="image/svg+xml" />
+  <link rel="icon" href="../favicon-32.png" type="image/png" sizes="32x32" />
+  <link rel="apple-touch-icon" href="../apple-touch-icon.png" />
+  <link rel="stylesheet" href="../styles.css" />
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <div class="wrap">
+    <nav class="site-nav" aria-label="Primary">
+      <a class="brand" href="../index.html">
+        <span class="brand-mark" aria-hidden="true">sg</span>
+        ServiceGate
+      </a>
+      <ul class="nav-links">
+        <li><a href="../index.html#checks">What it checks</a></li>
+        <li><a href="../index.html#ci">CI</a></li>
+        <li><a href="../index.html#limits">Limits</a></li>
+        <li><a href="../index.html#pricing">Pricing</a></li>
+        <li><a href="index.html" aria-current="page">Guides</a></li>
+        <li><a href="../index.html#faq">FAQ</a></li>
+        <li><a href="https://github.com/ESS2292/servicegate-action">Lite Action</a></li>
+      </ul>
+    </nav>
+    <main id="main" class="article">
+      <p class="crumbs"><a href="../index.html">ServiceGate</a> / <a href="index.html">Guides</a></p>
+      <section>
+        <div class="eyebrow">Guide &middot; November 26, 2026</div>
+        <h1>MongoDB &ldquo;UPGRADE PROBLEM: Found an invalid featureCompatibilityVersion&rdquo; after changing the mongo image tag</h1>
+        <p class="lead">A MongoDB data directory records a <em>feature compatibility version</em> (FCV). Each <code>mongod</code> only opens a short list of FCVs. Change the <code>mongo</code> tag in Compose by more than one step, or move it backwards, and the server exits on startup with exit code 62. <code>mongo:latest</code> is now MongoDB 9.0.8, and <code>mongo:8</code> is 8.3.17, so both tags can trigger this.</p>
+        <h2>The error</h2>
+        <p>Real output from starting <code>mongo:8.0</code> (MongoDB 8.0.38) on a named volume mounted at <code>/data/db</code> whose data was written by <code>mongo:6.0</code> (6.0.28). Run with Docker 26.1.5 on 26 November 2026. The container exits with status 62. This is the one <code>"s":"F"</code> (fatal) line, verbatim:</p>
+        <pre><code>{"t":{"$date":"2026-11-26T16:19:31.065+00:00"},"s":"F",  "c":"CONTROL",  "id":20573,   "ctx":"initandlisten","msg":"Wrong mongod version","attr":{"error":"UPGRADE PROBLEM: Found an invalid featureCompatibilityVersion document (ERROR: Location4926900: Invalid featureCompatibilityVersion document in admin.system.version: { _id: \"featureCompatibilityVersion\", version: \"6.0\" }. See https://docs.mongodb.com/master/release-notes/7.0-compatibility/#feature-compatibility. :: caused by :: Invalid feature compatibility version value '6.0'; expected '7.0' or '7.3' or '8.0'. See https://docs.mongodb.com/master/release-notes/7.0-compatibility/#feature-compatibility.). If the current featureCompatibilityVersion is below 7.0, see the documentation on upgrading at https://docs.mongodb.com/master/release-notes/7.0/#upgrade-procedures."}}</code></pre>
+        <p>A few lines later the log ends with <code>"msg":"Shutting down","attr":{"exitCode":62}</code>.</p>
+        <p>The check runs when <code>mongod</code> reads the FCV document at startup. In MongoDB 8.0.38, <a href="https://github.com/mongodb/mongo/blob/11d6674e73e4b36060314e68d7a12656d6a12aab/src/mongo/db/commands/feature_compatibility_version.cpp#L606-L617"><code>feature_compatibility_version.cpp</code></a> turns any FCV it cannot parse into a <code>MustDowngrade</code> error:</p>
+        <pre><code>if (!swVersion.isOK()) {
+    uassertStatusOK({ErrorCodes::MustDowngrade,
+                     str::stream()
+                         &lt;&lt; "UPGRADE PROBLEM: Found an invalid featureCompatibilityVersion "
+                            "document (ERROR: "
+                         &lt;&lt; swVersion.getStatus()
+                         &lt;&lt; "). If the current featureCompatibilityVersion is below "
+                         &lt;&lt; multiversion::toString(multiversion::GenericFCV::kLastLTS)
+                         ...</code></pre>
+        <p>The accepted list comes from <a href="https://github.com/mongodb/mongo/blob/11d6674e73e4b36060314e68d7a12656d6a12aab/src/mongo/db/feature_compatibility_version_parser.cpp#L64-L70"><code>feature_compatibility_version_parser.cpp</code></a>: the last LTS, the last continuous (rapid) release, and the server&rsquo;s own version. For 8.0 that is <code>'7.0' or '7.3' or '8.0'</code>. <a href="https://github.com/mongodb/mongo/blob/11d6674e73e4b36060314e68d7a12656d6a12aab/src/mongo/db/mongod_main.cpp#L745-L752"><code>mongod_main.cpp</code></a> catches <code>MustDowngrade</code>, logs <code>"Wrong mongod version"</code>, and exits with <code>ExitCode::needDowngrade</code>, which <a href="https://github.com/mongodb/mongo/blob/11d6674e73e4b36060314e68d7a12656d6a12aab/src/mongo/util/exit_code.h#L63"><code>exit_code.h</code></a> defines as <code>62</code> with the comment &ldquo;This exe can&rsquo;t use the existing data files&rdquo;. All links are to the <code>r8.0.38</code> tag (commit <code>11d6674</code>).</p>
+        <p>MongoDB 9.0.8 prints the list in a different format, including a doubled quote: <code>Expected one of the following versions: ''9.0', '8.3', '8.0'</code>. That is in the source too. At <code>r9.0.8</code> (<a href="https://github.com/mongodb/mongo/blob/ace0d09a96a9186dbcdc4570a66fc702666aae65/src/mongo/db/feature_compatibility_version_parser.cpp#L99-L111">parser, commit <code>ace0d09</code></a>) the message adds a <code>'</code> and then each version adds its own quotes.</p>
+        <h2>What the tags point to today</h2>
+        <p>Pulled from Docker Hub on 26 November 2026 (linux/amd64). Versions are the image&rsquo;s <code>MONGO_VERSION</code>. The FCV column is what a fresh volume reported with <code>db.adminCommand({getParameter:1, featureCompatibilityVersion:1})</code>. The tag list matches <a href="https://github.com/docker-library/official-images/blob/0f28a958af108e15ff7f200b0760add41ec7f611/library/mongo">library/mongo</a> in docker-library/official-images.</p>
+        <table class="compare">
+          <thead>
+            <tr><th>Tag</th><th>MongoDB</th><th>FCV of a new volume</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>mongo</code>, <code>mongo:latest</code>, <code>mongo:9</code>, <code>mongo:9.0</code></td><td>9.0.8</td><td>9.0</td></tr>
+            <tr><td><code>mongo:8</code>, <code>mongo:8.3</code></td><td>8.3.17</td><td>8.3</td></tr>
+            <tr><td><code>mongo:8.0</code></td><td>8.0.38</td><td>8.0</td></tr>
+            <tr><td><code>mongo:7</code>, <code>mongo:7.0</code></td><td>7.0.48</td><td>7.0</td></tr>
+            <tr><td><code>mongo:6</code>, <code>mongo:6.0</code></td><td>6.0.28</td><td>6.0</td></tr>
+          </tbody>
+        </table>
+        <p><code>mongo:6.0</code> (and <code>mongo:5.0</code>, which is 5.0.33) can still be pulled, but they are no longer listed in library/mongo, so they get no new builds. Note that <code>mongo:8</code> does <em>not</em> mean 8.0. It follows the newest 8.x release, which today is 8.3.</p>
+        <h2>Reproduced: which jumps work</h2>
+        <p>Each volume was written by one tag (one insert, then <code>docker stop</code>) and then mounted at <code>/data/db</code> by another tag. That is the layout of a Compose service with <code>volumes: - mongo-data:/data/db</code>. Docker Compose itself was not installed on the test machine, so the containers were started with <code>docker run</code> and named volumes. No authentication, standalone <code>mongod</code>, default settings.</p>
+        <table class="compare">
+          <thead>
+            <tr><th>Data written by</th><th>Started with</th><th>Result</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>6.0.28 (FCV 6.0)</td><td><code>mongo:7.0</code></td><td>Starts</td></tr>
+            <tr><td>6.0.28 (FCV 6.0)</td><td><code>mongo:8.0</code></td><td>Exit 62: <code>expected '7.0' or '7.3' or '8.0'</code></td></tr>
+            <tr><td>6.0.28 (FCV 6.0)</td><td><code>mongo:latest</code> (9.0.8)</td><td>Exit 62: <code>Expected one of the following versions: ''9.0', '8.3', '8.0'</code></td></tr>
+            <tr><td>7.0.48 (FCV 7.0)</td><td><code>mongo:latest</code> (9.0.8)</td><td>Exit 62, same list</td></tr>
+            <tr><td>8.0.38 (FCV 8.0)</td><td><code>mongo:latest</code> (9.0.8)</td><td>Starts</td></tr>
+            <tr><td>8.3.17 (FCV 8.3)</td><td><code>mongo:latest</code> (9.0.8)</td><td>Starts</td></tr>
+            <tr><td>8.3.17 (FCV 8.3)</td><td><code>mongo:8.0</code></td><td>Exit 62: <code>value '8.3'; expected '7.0' or '7.3' or '8.0'</code></td></tr>
+            <tr><td>9.0.8 (FCV 9.0)</td><td><code>mongo:8</code> (8.3.17)</td><td>Exit 62: <code>Expected one of the following versions: ''8.3', '8.2', '8.0'</code></td></tr>
+            <tr><td>9.0.8 (FCV 9.0)</td><td><code>mongo:8.0</code></td><td>Exit 62</td></tr>
+            <tr><td>8.0.38 (FCV 8.0)</td><td><code>mongo:7.0</code></td><td>Exit 62: <code>expected '6.0' or '6.3' or '7.0'</code></td></tr>
+            <tr><td>7.0.48 (FCV 7.0)</td><td><code>mongo:6.0</code></td><td>Exit 62: <code>expected '5.0' or '5.3' or '6.0</code> (6.0 prints no value and drops a quote)</td></tr>
+          </tbody>
+        </table>
+        <p>Three patterns show up. Skipping a major fails (6.0 &rarr; 8.0, 7.0 &rarr; 9.0). Going backwards fails, even inside one major (8.3 &rarr; 8.0). And the error text depends on the <em>new</em> server, so the same 6.0 volume gives a different message under 8.0 and 9.0.</p>
+        <p><strong>A failed start does not damage the data.</strong> After both 8.0 and 9.0 refused the 6.0 volume, <code>mongo:7.0</code> started on it, reported FCV <code>6.0</code>, and the upgrade below finished with the test document intact.</p>
+        <h2>Why CI stays green while local Compose breaks</h2>
+        <p>GitHub&rsquo;s <a href="https://docs.github.com/en/actions/tutorials/use-containerized-services/use-docker-service-containers">service container docs</a> say: &ldquo;GitHub creates a fresh Docker container for each service configured in the workflow, and destroys the service container when the job completes.&rdquo; A <code>mongo</code> service in CI starts with an empty <code>/data/db</code>, so any tag starts. The error shows up on a developer machine whose Compose volume was written by a different MongoDB. Typical ways to get there:</p>
+        <ul>
+          <li>Compose had <code>mongo:6</code> or <code>mongo:7</code>, CI moved to <code>mongo:8</code> or <code>latest</code>, and someone changes Compose to &ldquo;match CI.&rdquo;</li>
+          <li>Compose used <code>mongo:latest</code> or <code>mongo:8</code>, which moved to 9.0.8 or 8.3.17. Someone then pins Compose to <code>mongo:8.0</code> to match the workflow, and the volume is now too new.</li>
+          <li>A data directory or volume copied from a newer server is used by an older test container.</li>
+        </ul>
+        <h2>Fix it: upgrade one step at a time</h2>
+        <p>MongoDB&rsquo;s <a href="https://www.mongodb.com/docs/manual/release-notes/8.0-upgrade-standalone/">Upgrade a Standalone to 8.0</a> page (read 26 November 2026) says: &ldquo;To upgrade from a version earlier than the 7.0-series, you must successively upgrade major releases until you have upgraded to 7.0-series. For example, if you are running a 6.0-series, you must upgrade first to 7.0 before you can upgrade to 8.0.&rdquo; It also requires FCV <code>"7.0"</code> before moving to 8.0. The <a href="https://www.mongodb.com/docs/manual/reference/command/setFeatureCompatibilityVersion/">setFeatureCompatibilityVersion reference</a> says the <code>confirm</code> field is &ldquo;New in version 7.0&rdquo; and that without <code>confirm: true</code> &ldquo;the command fails and returns a warning about modifying the feature compatibility version.&rdquo;</p>
+        <p>This is the real run that took the 6.0 volume to 9.0. Between steps, the container was stopped and started again on the same volume with the next tag (in Compose: change the tag, then <code>docker compose up -d</code>, then <code>docker compose exec db mongosh</code>):</p>
+        <pre><code># mongo:7.0 on the 6.0 volume
+$ mongosh --eval 'db.version()'
+7.0.48
+$ mongosh --eval 'db.adminCommand({getParameter:1,featureCompatibilityVersion:1})'
+{ featureCompatibilityVersion: { version: '6.0' }, ok: 1 }
+$ mongosh --eval 'db.adminCommand({setFeatureCompatibilityVersion:"7.0"})'
+MongoServerError: Once you have upgraded to 7.0, you will not be able to downgrade FCV and binary version without support assistance. Please re-run this command with 'confirm: true' to acknowledge this and continue with the FCV upgrade.
+$ mongosh --eval 'db.adminCommand({setFeatureCompatibilityVersion:"7.0", confirm:true})'
+{ ok: 1 }
+
+# mongo:8.0 on the same volume
+$ mongosh --eval 'db.version()'
+8.0.38
+$ mongosh --eval 'db.adminCommand({getParameter:1,featureCompatibilityVersion:1})'
+{ featureCompatibilityVersion: { version: '7.0' }, ok: 1 }
+$ mongosh --eval 'db.adminCommand({setFeatureCompatibilityVersion:"8.0", confirm:true})'
+{ ok: 1 }
+$ mongosh --eval 'db.getSiblingDB("app").orders.findOne({},{_id:0})'
+{ n: 42 }
+
+# mongo:latest (9.0.8) on the same volume
+$ mongosh --eval 'db.version()'
+9.0.8
+$ mongosh --eval 'db.adminCommand({setFeatureCompatibilityVersion:"9.0", confirm:true})'
+{ ok: 1 }
+$ mongosh --eval 'db.adminCommand({getParameter:1,featureCompatibilityVersion:1})'
+{ featureCompatibilityVersion: { version: '9.0' }, ok: 1 }
+$ mongosh --eval 'db.getSiblingDB("app").orders.findOne({},{_id:0})'
+{ n: 42 }</code></pre>
+        <p>The <code>confirm</code> message is in <a href="https://github.com/mongodb/mongo/blob/11d6674e73e4b36060314e68d7a12656d6a12aab/src/mongo/db/commands/set_feature_compatibility_version_command.cpp#L358-L370"><code>set_feature_compatibility_version_command.cpp</code></a> at <code>r8.0.38</code>. 8.0 &rarr; 9.0 and 8.3 &rarr; 9.0 started directly in the test, so from 8.0 you do not need to stop at 8.3. If your database uses authentication, add your usual <code>-u</code>/<code>-p</code> options. Only the no-auth case was tested here.</p>
+        <ol>
+          <li><strong>Back up first.</strong> <code>mongodump --archive=backup.gz --gzip</code> worked from inside the container (mongodump and mongorestore 100.20.1 ship in the 9.0.8 and 7.0.48 images).</li>
+          <li><strong>Find the FCV on disk.</strong> Start the tag that wrote the volume, or read it from the error line: <code>version: "6.0"</code> in the message above.</li>
+          <li><strong>Step one major at a time</strong> (6.0 &rarr; 7.0 &rarr; 8.0 &rarr; 9.0). After each start, run <code>setFeatureCompatibilityVersion</code> with <code>confirm: true</code>, then move to the next tag.</li>
+          <li><strong>Then change the pin everywhere</strong> (Compose, workflow <code>services:</code>, Testcontainers, <code>.env.example</code>) in one pull request.</li>
+        </ol>
+        <h2>Going back to an older tag</h2>
+        <p>The FCV can be lowered while the newer server is running. Lowering it on 8.0 without <code>confirm</code> printed:</p>
+        <pre><code>MongoServerError: Once you have downgraded the FCV, if you choose to downgrade the binary version, it will require support assistance. Please re-run this command with 'confirm: true' to acknowledge this and continue with the FCV downgrade.</code></pre>
+        <p>With <code>confirm: true</code>, an 8.0 volume set to FCV <code>"7.0"</code> then started under <code>mongo:7.0</code> and returned the document. The same worked for 9.0 &rarr; FCV 8.0 &rarr; <code>mongo:8.0</code>, and for 8.3 &rarr; FCV 8.0 &rarr; <code>mongo:8.0</code>. That was a one-document standalone test. The server message above says a binary downgrade &ldquo;will require support assistance,&rdquo; and the 8.0 upgrade page says &ldquo;MongoDB only supports single-version downgrades.&rdquo; For local or CI data, two simpler options:</p>
+        <ul>
+          <li><strong>Dump and restore into the older version.</strong> A <code>mongodump --archive --gzip</code> from 9.0.8 restored into a fresh <code>mongo:7.0</code> volume with <code>mongorestore</code>: <code>1 document(s) restored successfully. 0 document(s) failed to restore.</code></li>
+          <li><strong>Reset the volume if the data is throwaway.</strong> <code>docker compose down -v</code> removes &ldquo;named volumes declared in the &lsquo;volumes&rsquo; section of the Compose file and anonymous volumes attached to containers&rdquo; (<a href="https://github.com/docker/compose/blob/main/docs/reference/compose_down.md">compose down reference</a>). This deletes the data.</li>
+        </ul>
+        <h2>Pin one version everywhere</h2>
+        <p>Because <code>mongo:8</code> is 8.3 today and 8.0 cannot open 8.3 data, pin the minor (<code>mongo:8.0</code>), not just the major. Use the same value in every file:</p>
+        <pre><code># .env.example
+MONGO_VERSION=8.0
+
+# docker-compose.yml
+services:
+  db:
+    image: mongo:${MONGO_VERSION:-8.0}
+    volumes:
+      - mongo-data:/data/db
+volumes:
+  mongo-data:
+
+# .github/workflows/ci.yml
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      mongo:
+        image: mongo:8.0.38
+        ports:
+          - 27017:27017
+        options: &gt;-
+          --health-cmd "mongosh --quiet --eval 'db.runCommand({ping:1}).ok'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5</code></pre>
+        <p>That <code>--health-cmd</code> reported <code>healthy</code> (exit 0, output <code>1</code>) on <code>mongo:8.0.38</code> with <code>docker run</code>. It was not run on a GitHub-hosted runner for this guide.</p>
+        <h2>How ServiceGate catches this</h2>
+        <p>The output below is copied from the ServiceGate 0.1.0 CLI (<code>servicegate check</code>) and the free Lite Action at <code>v1</code> (commit <code>ecffcd8</code>, run locally with Node), against small test repositories on 26 November 2026. ServiceGate already knows the <code>mongo</code>, <code>mongodb</code>, <code>bitnami/mongodb</code>, <code>cimg/mongo</code>, and <code>circleci/mongo</code> images and <code>MONGO*</code> variables in <code>.env.example</code>.</p>
+        <p><strong>Major drift fails the job.</strong> <code>.env.example</code> sets <code>MONGO_VERSION=8.0</code>, Compose uses <code>mongo:${MONGO_VERSION:-8.0}</code> with a named volume, the workflow service is <code>mongo:7.0</code>, and a Testcontainers test starts <code>mongo:6.0</code>. Exit code 1:</p>
+        <pre><code>ServiceGate checked 4 service image pins across 1 service family.
+
+Errors (1):
+  [version-drift] MongoDB major versions disagree: 8.0 (docker-compose.yml:3, compose db); 7.0 (.github/workflows/ci.yml:8, workflow mongo); 8.0 (.env.example:1, MONGO_VERSION); 6.0 (test/db.test.js:2, source).
+
+Warnings (1):
+  [missing-healthcheck] GitHub Actions service "mongo" in .github/workflows/ci.yml:8 has no --health-cmd. Without it, jobs can start before MongoDB is ready.</code></pre>
+        <p>The Lite Action on the same repository compares only Compose and the workflow. Exit code 1, outputs <code>ok=false</code>, <code>errors=1</code>, <code>codes=version-drift</code>:</p>
+        <pre><code>::error title=ServiceGate Lite::[version-drift] MongoDB major versions disagree: 8.0 (docker-compose.yml:3, compose db); 7.0 (.github/workflows/ci.yml:8, workflow mongo).
+::warning title=ServiceGate Lite::[missing-healthcheck] GitHub Actions service "mongo" in .github/workflows/ci.yml:8 has no --health-cmd. Without it, jobs can start before MongoDB is ready.
+ServiceGate Lite checked 2 service image pins across 1 service family.
+
+Errors (1):
+  [version-drift] MongoDB major versions disagree: 8.0 (docker-compose.yml:3, compose db); 7.0 (.github/workflows/ci.yml:8, workflow mongo).</code></pre>
+        <p><strong>Minor drift is a warning.</strong> Compose <code>mongo:8.3</code>, workflow <code>mongo:8.0</code>. Exit code 0 (CLI and Lite):</p>
+        <pre><code>ServiceGate checked 2 service image pins across 1 service family.
+
+Warnings (2):
+  [minor-drift] MongoDB 8 pins disagree on minor/patch: 8.3 (docker-compose.yml:3, compose db); 8.0 (.github/workflows/ci.yml:8, workflow mongo).
+  [missing-healthcheck] GitHub Actions service "mongo" in .github/workflows/ci.yml:8 has no --health-cmd. Without it, jobs can start before MongoDB is ready.</code></pre>
+        <p><strong>Unpinned images are warnings (errors with <code>--strict-pins</code>).</strong> <code>mongo</code> in Compose and <code>mongo:latest</code> in CI. Exit code 0 by default:</p>
+        <pre><code>Warnings (3):
+  [unpinned-image] MongoDB image is unpinned (latest) at docker-compose.yml:3 (compose). Pin a numeric major tag instead of 'latest'.
+  [unpinned-image] MongoDB image is unpinned (latest) at .github/workflows/ci.yml:8 (workflow). Pin a numeric major tag instead of 'latest'.
+  [missing-healthcheck] GitHub Actions service "mongo" in .github/workflows/ci.yml:8 has no --health-cmd. Without it, jobs can start before MongoDB is ready.</code></pre>
+        <p>With <code>--strict-pins</code>, the two <code>unpinned-image</code> lines move to <code>Errors (2):</code> and the exit code is 1.</p>
+        <p><strong>After the fix above</strong> (<code>.env.example</code>, Compose, and the workflow from the pinning example). Exit code 0:</p>
+        <pre><code>ServiceGate checked 3 service image pins across 1 service family.
+OK — Compose, CI, and test service images agree.</code></pre>
+        <p>Lite on the same repository: <code>OK — Compose and GitHub Actions service images agree.</code> (exit 0, <code>ok=true</code>, <code>warnings=0</code>).</p>
+        <h2>What ServiceGate does not detect</h2>
+        <ul>
+          <li><strong>Minor drift does not fail the job.</strong> ServiceGate 0.1.0 reports <code>8.3</code> vs <code>8.0</code> as a warning (exit 0). For MongoDB that is not enough: 8.0 cannot open 8.3 data, as reproduced above. Read the warnings, or gate on <code>--json</code> output yourself.</li>
+          <li><strong>A floating major is not compared with a minor.</strong> Compose <code>mongo:8</code> and workflow <code>mongo:8.0</code> produced no drift finding (exit 0, only the health-check warning) in both the CLI and Lite. Today <code>mongo:8</code> is 8.3.17.</li>
+          <li><strong>It does not know MongoDB&rsquo;s upgrade path.</strong> It reports that pins disagree. It does not say that 6.0 &rarr; 8.0 needs a stop at 7.0, or that a change of pin needs <code>setFeatureCompatibilityVersion</code>.</li>
+          <li><strong>It does not look at volumes or the FCV.</strong> It reads tags in committed files. It cannot see which MongoDB wrote a developer&rsquo;s volume, so it cannot predict this error on a given machine. If every file is changed from <code>mongo:6.0</code> to <code>mongo:8.0</code> together, ServiceGate passes and old local volumes still fail.</li>
+          <li><strong>It does not resolve tags.</strong> It flags <code>latest</code> and a missing tag as unpinned. It does not know that <code>latest</code> means 9.0.8 today.</li>
+          <li><strong>Replica sets and sharded clusters were not tested.</strong> Everything here is a single standalone <code>mongod</code> without authentication.</li>
+        </ul>
+        <p>The free <a href="https://github.com/ESS2292/servicegate-action">ServiceGate Lite Action</a> compares Compose files to GitHub Actions <code>services:</code>. The full CLI also reads Dockerfiles, Testcontainers literals, and committed <code>.env.example</code> version variables, as in the first example above. Checkout is not live.</p>
+      </section>
+      <section class="cta-box" aria-label="ServiceGate">
+        <h2>Want the check in CI?</h2>
+        <p>The free <a href="https://github.com/ESS2292/servicegate-action">ServiceGate Lite GitHub Action</a> compares Compose files to GitHub Actions service images. The full <strong>ServiceGate CLI</strong> also reads Dockerfiles, Testcontainers literals, and committed <code>.env.example</code> version variables, with a JSON report, locally or in any CI. Node 18+, zero runtime dependencies. Checkout is not live.</p>
+        <p><a class="cta-link" href="../index.html#checks">See what ServiceGate checks &rarr;</a></p>
+      </section>
+      <section>
+        <h2>Related guides</h2>
+        <ul>
+          <li><a href="redis-cant-handle-rdb-format-version.html">Redis &ldquo;Can&rsquo;t handle RDB format version&rdquo; after changing the image tag</a></li>
+          <li><a href="postgres-database-files-incompatible-with-server.html">Postgres &ldquo;database files are incompatible with server&rdquo; after a major version change</a></li>
+          <li><a href="mysql-version-compose-vs-github-actions.html">MySQL version drift between docker-compose.yml and GitHub Actions services</a></li>
+        </ul>
+      </section>
+    </main>
+    <footer>
+      <nav class="family-nav" aria-label="Other tools in this family">
+        <span class="family-label">Also:</span>
+          <a href="https://ess2292.github.io/envgate/">EnvGate</a>
+          <a href="https://ess2292.github.io/runtimegate/">RuntimeGate</a>
+          <a href="https://ess2292.github.io/lockgate/">LockGate</a>
+          <a href="https://ess2292.github.io/servicegate/" aria-current="page">ServiceGate</a>
+      </nav>
+<div class="footer-row">
+        <div>ServiceGate 0.1.0 by Emilio Straubel · pre-launch pages, not indexed</div>
+        <div class="footer-links">
+          <a href="../index.html">Home</a>
+          <a href="index.html" aria-current="page">Guides</a>
+          <a href="../privacy.html">Privacy</a>
+          <a href="../terms.html">Terms</a>
+          <a href="https://github.com/ESS2292/servicegate-action">Lite Action</a>
+          <a href="https://github.com/ESS2292/servicegate-action/issues">Issues</a>
+        </div>
+      </div>
+    </footer>
+  </div>
+</body>
+</html>
